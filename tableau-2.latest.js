@@ -1,4 +1,4 @@
-/*! tableau-2.5.0 */
+/*! tableau-2.6.0 */
 (function() {
 
 
@@ -3619,6 +3619,10 @@
                         {
                             return 'AVG';
                         }
+                    case 'COLLECT':
+                        {
+                            return 'COLLECT';
+                        }
                     case 'COUNT':
                         {
                             return 'COUNT';
@@ -3975,7 +3979,7 @@
         var $tab_ApiErrorCode = global.tab.ApiErrorCode = ss.mkEnum($asm, 'tab.ApiErrorCode', { internalError: 'internalError', serverError: 'serverError', invalidAggregationFieldName: 'invalidAggregationFieldName', invalidToolbarButtonName: 'invalidToolbarButtonName', invalidParameter: 'invalidParameter', invalidUrl: 'invalidUrl', staleDataReference: 'staleDataReference', vizAlreadyInManager: 'vizAlreadyInManager', noUrlOrParentElementNotFound: 'noUrlOrParentElementNotFound', invalidFilterFieldName: 'invalidFilterFieldName', invalidFilterFieldValue: 'invalidFilterFieldValue', invalidFilterFieldNameOrValue: 'invalidFilterFieldNameOrValue', filterCannotBePerformed: 'filterCannotBePerformed', notActiveSheet: 'notActiveSheet', invalidCustomViewName: 'invalidCustomViewName', missingRangeNForRelativeDateFilters: 'missingRangeNForRelativeDateFilters', missingMaxSize: 'missingMaxSize', missingMinSize: 'missingMinSize', missingMinMaxSize: 'missingMinMaxSize', invalidSize: 'invalidSize', invalidSizeBehaviorOnWorksheet: 'invalidSizeBehaviorOnWorksheet', sheetNotInWorkbook: 'sheetNotInWorkbook', indexOutOfRange: 'indexOutOfRange', downloadWorkbookNotAllowed: 'downloadWorkbookNotAllowed', nullOrEmptyParameter: 'nullOrEmptyParameter', browserNotCapable: 'browserNotCapable', unsupportedEventName: 'unsupportedEventName', invalidDateParameter: 'invalidDateParameter', invalidSelectionFieldName: 'invalidSelectionFieldName', invalidSelectionValue: 'invalidSelectionValue', invalidSelectionDate: 'invalidSelectionDate', noUrlForHiddenWorksheet: 'noUrlForHiddenWorksheet', maxVizResizeAttempts: 'maxVizResizeAttempts' }, true);
         ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.ApiFieldAggregationType
-        var $tab_ApiFieldAggregationType = global.tab.ApiFieldAggregationType = ss.mkEnum($asm, 'tab.ApiFieldAggregationType', { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER' }, true);
+        var $tab_ApiFieldAggregationType = global.tab.ApiFieldAggregationType = ss.mkEnum($asm, 'tab.ApiFieldAggregationType', { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER', COLLECT: 'COLLECT' }, true);
         ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.ApiFieldRoleType
         var $tab_ApiFieldRoleType = global.tab.ApiFieldRoleType = ss.mkEnum($asm, 'tab.ApiFieldRoleType', { dimension: 'dimension', measure: 'measure', unknown: 'unknown' }, true);
@@ -4428,8 +4432,8 @@
                 if (ss.isNullOrUndefined(filterOptions)) {
                     throw $tab__TableauException.createNullOrEmptyParameter('filterOptions');
                 }
-                if (ss.isNullOrUndefined(filterOptions.min) && ss.isNullOrUndefined(filterOptions.max)) {
-                    throw $tab__TableauException.create('invalidParameter', 'At least one of filterOptions.min or filterOptions.max must be specified.');
+                if (ss.isNullOrUndefined(filterOptions.min) && ss.isNullOrUndefined(filterOptions.max) && ss.isNullOrUndefined(filterOptions.nullOption)) {
+                    throw $tab__TableauException.create('invalidParameter', 'At least one of filterOptions.min or filterOptions.max or filterOptions.nullOption must be specified.');
                 }
                 var fixedUpFilterOptions = new Object();
                 if (ss.isValue(filterOptions.min)) {
@@ -5028,7 +5032,7 @@
             ns.DataType = { FLOAT: 'float', INTEGER: 'integer', STRING: 'string', BOOLEAN: 'boolean', DATE: 'date', DATETIME: 'datetime' };
             ns.DateRangeType = { LAST: 'last', LASTN: 'lastn', NEXT: 'next', NEXTN: 'nextn', CURR: 'curr', TODATE: 'todate' };
             ns.ErrorCode = { INTERNAL_ERROR: 'internalError', SERVER_ERROR: 'serverError', INVALID_AGGREGATION_FIELD_NAME: 'invalidAggregationFieldName', INVALID_TOOLBAR_BUTTON_NAME: 'invalidToolbarButtonName', INVALID_PARAMETER: 'invalidParameter', INVALID_URL: 'invalidUrl', STALE_DATA_REFERENCE: 'staleDataReference', VIZ_ALREADY_IN_MANAGER: 'vizAlreadyInManager', NO_URL_OR_PARENT_ELEMENT_NOT_FOUND: 'noUrlOrParentElementNotFound', INVALID_FILTER_FIELDNAME: 'invalidFilterFieldName', INVALID_FILTER_FIELDVALUE: 'invalidFilterFieldValue', INVALID_FILTER_FIELDNAME_OR_VALUE: 'invalidFilterFieldNameOrValue', FILTER_CANNOT_BE_PERFORMED: 'filterCannotBePerformed', NOT_ACTIVE_SHEET: 'notActiveSheet', INVALID_CUSTOM_VIEW_NAME: 'invalidCustomViewName', MISSING_RANGEN_FOR_RELATIVE_DATE_FILTERS: 'missingRangeNForRelativeDateFilters', MISSING_MAX_SIZE: 'missingMaxSize', MISSING_MIN_SIZE: 'missingMinSize', MISSING_MINMAX_SIZE: 'missingMinMaxSize', INVALID_SIZE: 'invalidSize', INVALID_SIZE_BEHAVIOR_ON_WORKSHEET: 'invalidSizeBehaviorOnWorksheet', SHEET_NOT_IN_WORKBOOK: 'sheetNotInWorkbook', INDEX_OUT_OF_RANGE: 'indexOutOfRange', DOWNLOAD_WORKBOOK_NOT_ALLOWED: 'downloadWorkbookNotAllowed', NULL_OR_EMPTY_PARAMETER: 'nullOrEmptyParameter', BROWSER_NOT_CAPABLE: 'browserNotCapable', UNSUPPORTED_EVENT_NAME: 'unsupportedEventName', INVALID_DATE_PARAMETER: 'invalidDateParameter', INVALID_SELECTION_FIELDNAME: 'invalidSelectionFieldName', INVALID_SELECTION_VALUE: 'invalidSelectionValue', INVALID_SELECTION_DATE: 'invalidSelectionDate', NO_URL_FOR_HIDDEN_WORKSHEET: 'noUrlForHiddenWorksheet', MAX_VIZ_RESIZE_ATTEMPTS: 'maxVizResizeAttempts' };
-            ns.FieldAggregationType = { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER' };
+            ns.FieldAggregationType = { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER', COLLECT: 'COLLECT' };
             ns.FieldRoleType = { DIMENSION: 'dimension', MEASURE: 'measure', UNKNOWN: 'unknown' };
             ns.FilterUpdateType = { ALL: 'all', REPLACE: 'replace', ADD: 'add', REMOVE: 'remove' };
             ns.FilterType = { CATEGORICAL: 'categorical', QUANTITATIVE: 'quantitative', HIERARCHICAL: 'hierarchical', RELATIVEDATE: 'relativedate' };
@@ -6832,6 +6836,7 @@
                 commandParameters['api.filterHierarchicalLevels'] = 0;
                 // no depth details to be consistent
                 commandParameters['api.ignoreDomain'] = options.ignoreDomain || false;
+                commandParameters['api.filterRelevantValuesOnly'] = (ss.isNullOrUndefined(options.relevantValuesOnly) ? true : options.relevantValuesOnly);
                 // send the command
                 var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.GetOneFilterInfoCommand', 0, ss.mkdel(this, function(result) {
                     // Check for an error first.
@@ -6857,6 +6862,7 @@
                 var commandParameters = {};
                 this.$addVisualIdToCommand(commandParameters);
                 commandParameters['api.ignoreDomain'] = options.ignoreDomain || false;
+                commandParameters['api.filterRelevantValuesOnly'] = (ss.isNullOrUndefined(options.relevantValuesOnly) ? true : options.relevantValuesOnly);
                 // send the command
                 var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.GetFiltersListCommand', 0, ss.mkdel(this, function(result) {
                     this.set__filters($tableauSoftware_Filter.processFiltersList(this, result));
@@ -7524,10 +7530,7 @@
             this.$customViewLoadCallbacks = {};
             this.$crossDomainMessager = null;
             var legacyHandler = ss.mkdel(this, function(command, handler) {
-                var jsApiMessageHandler = ss.safeCast(handler, $tab_IJsApiMessageHandler);
-                if (ss.isValue(jsApiMessageHandler)) {
-                    this.$handleLegacyNotifications(command, jsApiMessageHandler);
-                }
+                this.$handleLegacyNotifications(command, ss.cast(handler, $tab_IJsApiMessageHandler));
             });
             this.$crossDomainMessager = new tab.CrossDomainMessager(legacyHandler);
         }, {
@@ -7579,15 +7582,17 @@
             $handleLegacyNotifications: function JsApiMessageRouter$HandleLegacyNotifications(command, handler) {
                 if (command.get_name() === 'layoutInfoReq') {
                     $tab__VizManagerImpl.$sendVisibleRects();
-                } else if (command.get_name() === 'tableau.completed' || command.get_name() === 'completed') {
-                    // Backwards compatibility requires checking for "completed".
-                    handler.handleVizLoad();
-                } else if (command.get_name() === 'tableau.listening') {
-                    handler.handleVizListening();
-                } else if (command.get_name() === 'sf?') {
-                    if (ss.count(command.get_parameters()) > 0) {
-                        var requestId = ss.getItem(command.get_parameters(), 0);
-                        handler.sendScaleFactor(requestId);
+                } else if (ss.isValue(handler)) {
+                    if (command.get_name() === 'tableau.completed' || command.get_name() === 'completed') {
+                        // Backwards compatibility requires checking for "completed".
+                        handler.handleVizLoad();
+                    } else if (command.get_name() === 'tableau.listening') {
+                        handler.handleVizListening();
+                    } else if (command.get_name() === 'sf?') {
+                        if (ss.count(command.get_parameters()) > 0) {
+                            var requestId = ss.getItem(command.get_parameters(), 0);
+                            handler.sendScaleFactor(requestId);
+                        }
                     }
                 }
             }
@@ -8309,6 +8314,10 @@
             $showExportPowerPointDialog: function VizImpl$ShowExportPowerPointDialog() {
                 this.$invokeCommand('showExportPowerPointDialog');
             },
+            $exportCrossTabToExcel: function VizImpl$ExportCrossTabToExcel(sheetOrInfoOrName) {
+                var sheetName = this.$verifyOperationAllowedOnActiveSheetOrSheetWithinActiveDashboard(sheetOrInfoOrName);
+                this.$invokeCommand('exportCrosstabToExcel', sheetName);
+            },
             $revertAllAsync: function VizImpl$RevertAllAsync() {
                 return tab._Utility.noResultPromiseHelper('api.RevertAllCommand', null, this.$messagingOptions);
             },
@@ -8368,12 +8377,12 @@
                     // Keep the viz invisible until the size of the frame is set
                     this.$makeInvisible();
                     if (this.$parameters.displayStaticImage) {
-                        this.$staticImage = this.$createStaticImageElement(this.$initialAvailableSize);
+                        this.$staticImage = this.$createStaticImageElement(this.$initialAvailableSize.width + 'px', this.$initialAvailableSize.height + 'px');
                         this.$staticImage.style.display = 'block';
                     }
                 } else {
                     if (this.$parameters.displayStaticImage) {
-                        this.$staticImage = this.$createStaticImageElement(tab.Size.$ctor(parseInt(this.$parameters.width), parseInt(this.$parameters.height)));
+                        this.$staticImage = this.$createStaticImageElement(this.$parameters.width, this.$parameters.height);
                         this.$staticImage.style.display = 'block';
                     }
                     this.$iframe = this.$createIframe();
@@ -8538,7 +8547,7 @@
                 return deferred.get_promise();
             },
             $invokeCommand: function VizImpl$InvokeCommand(command, sheetName) {
-                if (command !== 'showExportImageDialog' && command !== 'showExportDataDialog' && command !== 'showExportCrosstabDialog' && command !== 'showExportPDFDialog' && command !== 'showShareDialog' && command !== 'showExportPowerPointDialog' && command !== 'showDownloadWorkbookDialog') {
+                if (command !== 'showExportImageDialog' && command !== 'showExportDataDialog' && command !== 'showExportCrosstabDialog' && command !== 'showExportPDFDialog' && command !== 'showShareDialog' && command !== 'showExportPowerPointDialog' && command !== 'exportCrosstabToExcel' && command !== 'showDownloadWorkbookDialog') {
                     throw tab._TableauException.createInternalError(null);
                 }
                 // prepare the parameter
@@ -8820,10 +8829,10 @@
             $onCheckForDone: function VizImpl$OnCheckForDone() {
                 window.setTimeout(ss.mkdel(this, this.$checkForDone), 3000);
             },
-            $createStaticImageElement: function VizImpl$CreateStaticImageElement(initialSize) {
+            $createStaticImageElement: function VizImpl$CreateStaticImageElement(width, height) {
                 //<div class="wcStaticImage" id="staticImage" style="background-color:transparent;
                 // background: no-repeat url('<e:html value='${staticImageHtml}'/>');
-                // left: 4px; top:${showTabs ? 31 : 9}px; width:auto; height:auto;">
+                // left: 8px; top:${showTabs ? 31 : 9}px; width:auto; height:auto;">
                 //</div>
                 var $t1 = document.createElement('div');
                 var img = ss.cast($t1, ss.isValue($t1) && (ss.isInstanceOfType($t1, Element) && $t1.tagName === 'DIV'));
@@ -8831,8 +8840,8 @@
                 img.style.left = '8px';
                 img.style.top = (this.$parameters.tabs ? '31px' : '9px');
                 img.style.position = 'absolute';
-                img.style.width = initialSize.width + 'px';
-                img.style.height = initialSize.height + 'px';
+                img.style.width = width;
+                img.style.height = height;
                 this.$contentRootElement().appendChild(img);
                 return img;
             },
@@ -9663,6 +9672,9 @@
             showExportPowerPointDialog: function Viz$ShowExportPowerPointDialog() {
                 this._impl.$showExportPowerPointDialog();
             },
+            exportCrossTabToExcel: function Viz$ExportCrossTabToExcel(worksheetWithinDashboard) {
+                this._impl.$exportCrossTabToExcel(worksheetWithinDashboard);
+            },
             revertAllAsync: function Viz$RevertAllAsync() {
                 return this._impl.$revertAllAsync();
             },
@@ -9916,7 +9928,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 5, 0, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 6, 0, 'null');
         })();
     })();
 

@@ -1,4 +1,4 @@
-/*! tableau-2.1.1 */
+/*! tableau-2.1.2 */
 (function() {
 
 
@@ -1521,6 +1521,18 @@
             },
             get_stack: function Exception$get_stack() {
                 return this._error.stack;
+            },
+            toString: function Exception$toString() {
+                var message = this._message;
+                var exception = this;
+                if (ss.isNullOrEmptyString(message)) {
+                    if (ss.isValue(ss.getInstanceType(exception)) && ss.isValue(ss.getTypeFullName(ss.getInstanceType(exception)))) {
+                        message = ss.getTypeFullName(ss.getInstanceType(exception));
+                    } else {
+                        message = '[object Exception]';
+                    }
+                }
+                return message;
             }
         });
 
@@ -1999,6 +2011,9 @@
             },
             get_screenTop: function WindowHelper$get_ScreenTop() {
                 return $tab_WindowHelper.$screenTopFunc(this.$window);
+            },
+            isQuirksMode: function WindowHelper$IsQuirksMode() {
+                return document.compatMode === 'BackCompat';
             }
         });
         (function() {
@@ -2247,7 +2262,7 @@
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.DoNothingCrossDomainHandler
         var $tab_$DoNothingCrossDomainHandler = function() {
-            this.$handlerId = null;
+            this.$hostId = null;
             this.$1$CustomViewsListLoadField = null;
             this.$1$StateReadyForQueryField = null;
         };
@@ -2262,6 +2277,12 @@
             this.$filterCaption = filterCaption;
         };
         $tab_$FilterEventContext.__typeName = 'tab.$FilterEventContext';
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.HighlightEventContext
+        var $tab_$HighlightEventContext = function(workbookImpl, worksheetImpl) {
+            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
+        };
+        $tab_$HighlightEventContext.__typeName = 'tab.$HighlightEventContext';
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.MarkImpl
         var $tab_$MarkImpl = function(tupleIdOrPairs) {
@@ -2406,15 +2427,15 @@
         global.tab._ApiBootstrap = $tab__ApiBootstrap;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.ApiCommand
-        var $tab__ApiCommand = function(name, commandId, handlerId, parameters) {
-            this.$name = null;
-            this.$handlerId = null;
-            this.$commandId = null;
-            this.$parameters = null;
-            this.$name = name;
-            this.$commandId = commandId;
-            this.$handlerId = handlerId;
-            this.$parameters = parameters;
+        var $tab__ApiCommand = function(name, commandId, hostId, parameters) {
+            this.$1$NameField = null;
+            this.$1$HostIdField = null;
+            this.$1$CommandIdField = null;
+            this.$1$ParametersField = null;
+            this.set_name(name);
+            this.set_commandId(commandId);
+            this.set_hostId(hostId);
+            this.set_parameters(parameters);
         };
         $tab__ApiCommand.__typeName = 'tab._ApiCommand';
         $tab__ApiCommand.generateNextCommandId = function ApiCommand$GenerateNextCommandId() {
@@ -2438,20 +2459,20 @@
                 return new $tab__ApiCommand(name, sourceId, null, null);
             }
             sourceId = secondPart.substr(0, index);
-            var handlerId;
+            var hostId;
             var thirdPart = secondPart.substr(index + 1);
             index = thirdPart.indexOf(String.fromCharCode(44));
             if (index < 0) {
-                handlerId = thirdPart;
-                return new $tab__ApiCommand(name, sourceId, handlerId, null);
+                hostId = thirdPart;
+                return new $tab__ApiCommand(name, sourceId, hostId, null);
             }
-            handlerId = thirdPart.substr(0, index);
+            hostId = thirdPart.substr(0, index);
             var parameters = thirdPart.substr(index + 1);
             $tab__ApiCommand.lastResponseMessage = serialized;
             if (name === 'api.GetClientInfoCommand') {
                 $tab__ApiCommand.lastClientInfoResponseMessage = serialized;
             }
-            return new $tab__ApiCommand(name, sourceId, handlerId, parameters);
+            return new $tab__ApiCommand(name, sourceId, hostId, parameters);
         };
         global.tab._ApiCommand = $tab__ApiCommand;
         ////////////////////////////////////////////////////////////////////////////////
@@ -3286,6 +3307,10 @@
             }
             var viewportRect = $tab__Utility.contentRectInDocumentCoordinates(document.documentElement);
             var win = new tab.WindowHelper(window.self);
+            if (win.isQuirksMode()) {
+                viewportRect.height = document.body.clientHeight - viewportRect.left;
+                viewportRect.width = document.body.clientWidth - viewportRect.top;
+            }
             viewportRect.left += win.get_pageXOffset();
             viewportRect.top += win.get_pageYOffset();
             return visibleRect.intersect(viewportRect);
@@ -3425,7 +3450,7 @@
             this.toolbar = false;
             this.toolBarPosition = null;
             this.device = null;
-            this.handlerId = null;
+            this.hostId = null;
             this.width = null;
             this.height = null;
             this.parentElement = null;
@@ -4316,6 +4341,15 @@
         $tab_FirstVizSizeKnownEvent.__typeName = 'tab.FirstVizSizeKnownEvent';
         global.tab.FirstVizSizeKnownEvent = $tab_FirstVizSizeKnownEvent;
         ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.HighlightEvent
+        var $tab_HighlightEvent = function(eventName, viz, worksheetImpl) {
+            this.$context = null;
+            $tab_WorksheetEvent.call(this, eventName, viz, worksheetImpl);
+            this.$context = new $tab_$HighlightEventContext(viz._impl.get__workbookImpl(), worksheetImpl);
+        };
+        $tab_HighlightEvent.__typeName = 'tab.HighlightEvent';
+        global.tab.HighlightEvent = $tab_HighlightEvent;
+        ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.ICrossDomainMessageHandler
         var $tab_ICrossDomainMessageHandler = function() {};
         $tab_ICrossDomainMessageHandler.__typeName = 'tab.ICrossDomainMessageHandler';
@@ -4495,6 +4529,7 @@
             this.$1$CustomViewsListLoadField = null;
             this.$1$StateReadyForQueryField = null;
             this.$1$MarksSelectionField = null;
+            this.$1$MarksHighlightField = null;
             this.$1$FilterChangeField = null;
             this.$1$ParameterValueChangeField = null;
             this.$1$CustomViewLoadField = null;
@@ -4860,19 +4895,19 @@
         ss.initInterface($tab_ICrossDomainMessageRouter, $asm, { registerHandler: null, unregisterHandler: null, sendCommand: null });
         ss.initClass($tab_$CrossDomainMessageRouter, $asm, {
             registerHandler: function CrossDomainMessageRouter$RegisterHandler(handler) {
-                var uniqueId = 'handler' + this.$nextHandlerId;
-                if (ss.isValue(handler.get_handlerId()) || ss.isValue(this.$handlers[handler.get_handlerId()])) {
-                    throw $tab__TableauException.createInternalError("Handler '" + handler.get_handlerId() + "' is already registered.");
+                var uniqueId = 'host' + this.$nextHandlerId;
+                if (ss.isValue(handler.get_hostId()) || ss.isValue(this.$handlers[handler.get_hostId()])) {
+                    throw $tab__TableauException.createInternalError("Host '" + handler.get_hostId() + "' is already registered.");
                 }
                 this.$nextHandlerId++;
-                handler.set_handlerId(uniqueId);
+                handler.set_hostId(uniqueId);
                 this.$handlers[uniqueId] = handler;
                 handler.add_customViewsListLoad(ss.mkdel(this, this.$handleCustomViewsListLoad));
                 handler.add_stateReadyForQuery(ss.mkdel(this, this.$handleStateReadyForQuery));
             },
             unregisterHandler: function CrossDomainMessageRouter$UnregisterHandler(handler) {
-                if (ss.isValue(handler.get_handlerId()) || ss.isValue(this.$handlers[handler.get_handlerId()])) {
-                    delete this.$handlers[handler.get_handlerId()];
+                if (ss.isValue(handler.get_hostId()) || ss.isValue(this.$handlers[handler.get_hostId()])) {
+                    delete this.$handlers[handler.get_hostId()];
                     handler.remove_customViewsListLoad(ss.mkdel(this, this.$handleCustomViewsListLoad));
                     handler.remove_stateReadyForQuery(ss.mkdel(this, this.$handleStateReadyForQuery));
                 }
@@ -4880,7 +4915,7 @@
             sendCommand: function(T) {
                 return function CrossDomainMessageRouter$SendCommand(source, commandParameters, returnHandler) {
                     var iframe = source.get_iframe();
-                    var handlerId = source.get_handlerId();
+                    var handlerId = source.get_hostId();
                     if (!$tab__Utility.hasWindowPostMessage() || ss.isNullOrUndefined(iframe) || ss.isNullOrUndefined(iframe.contentWindow)) {
                         return;
                     }
@@ -4916,7 +4951,7 @@
                 };
             },
             $handleCustomViewsListLoad: function CrossDomainMessageRouter$HandleCustomViewsListLoad(source) {
-                var handlerId = source.get_handlerId();
+                var handlerId = source.get_hostId();
                 var customViewCallbacks = this.$customViewLoadCallbacks[handlerId];
                 if (ss.isNullOrUndefined(customViewCallbacks)) {
                     return;
@@ -4930,7 +4965,7 @@
                 delete this.$customViewLoadCallbacks[handlerId];
             },
             $handleStateReadyForQuery: function CrossDomainMessageRouter$HandleStateReadyForQuery(source) {
-                var queue = this.$commandReturnAfterStateReadyQueues[source.get_handlerId()];
+                var queue = this.$commandReturnAfterStateReadyQueues[source.get_hostId()];
                 if ($tab__Utility.isNullOrEmpty(queue)) {
                     return;
                 }
@@ -4948,10 +4983,10 @@
                 }
                 var command = $tab__ApiCommand.parse(messageEvent.data.toString());
                 var rawName = command.get_rawName();
-                var handlerId = command.get_handlerId();
-                var handler = this.$handlers[handlerId];
-                if (ss.isNullOrUndefined(handler) || !ss.referenceEquals(handler.get_handlerId(), command.get_handlerId())) {
-                    handler = new $tab_$DoNothingCrossDomainHandler();
+                var hostId = command.get_hostId();
+                var handler = this.$handlers[hostId];
+                if (ss.isNullOrUndefined(handler) || !ss.referenceEquals(handler.get_hostId(), command.get_hostId())) {
+                    handler = this.$findHostIdByDomComparison(messageEvent);
                 }
                 if (command.get_isApiCommandName()) {
                     if (ss.referenceEquals(command.get_commandId(), $tab__ApiCommand.crossDomainEventNotificationId)) {
@@ -4967,7 +5002,7 @@
                 }
             },
             $handleCrossDomainResponse: function CrossDomainMessageRouter$HandleCrossDomainResponse(command) {
-                var commandCallbackMap = this.$commandCallbacks[command.get_handlerId()];
+                var commandCallbackMap = this.$commandCallbacks[command.get_hostId()];
                 var returnHandler = (ss.isValue(commandCallbackMap) ? commandCallbackMap[command.get_commandId()] : null);
                 if (ss.isNullOrUndefined(returnHandler)) {
                     return;
@@ -4994,10 +5029,10 @@
                                         returnHandler.get_successCallback()(commandResult);
                                     }
                                 };
-                                var queue = this.$commandReturnAfterStateReadyQueues[command.get_handlerId()];
+                                var queue = this.$commandReturnAfterStateReadyQueues[command.get_hostId()];
                                 if (ss.isNullOrUndefined(queue)) {
                                     queue = [];
-                                    this.$commandReturnAfterStateReadyQueues[command.get_handlerId()] = queue;
+                                    this.$commandReturnAfterStateReadyQueues[command.get_hostId()] = queue;
                                 }
                                 queue.push(postponedCallback);
                                 break;
@@ -5021,6 +5056,20 @@
                 } else if (messageName === 'tableau.listening') {
                     handler.handleVizListening();
                 }
+            },
+            $findHostIdByDomComparison: function CrossDomainMessageRouter$FindHostIdByDomComparison(messageEvent) {
+                var $t1 = new ss.ObjectEnumerator(this.$handlers);
+                try {
+                    while ($t1.moveNext()) {
+                        var pair = $t1.current();
+                        if (this.$handlers.hasOwnProperty(pair.key) && ss.referenceEquals(pair.value.get_iframe().contentWindow, messageEvent.source)) {
+                            return pair.value;
+                        }
+                    }
+                } finally {
+                    $t1.dispose();
+                }
+                return new $tab_$DoNothingCrossDomainHandler();
             }
         }, null, [$tab_ICrossDomainMessageRouter]);
         ss.initClass($tab_EventContext, $asm, {
@@ -5038,7 +5087,7 @@
         }, $tab_EventContext);
         ss.initClass($tab_$DashboardZoneInfo, $asm, {});
         ss.initClass($tab_$DeferredUtil, $asm, {});
-        ss.initInterface($tab_ICrossDomainMessageHandler, $asm, { add_customViewsListLoad: null, remove_customViewsListLoad: null, add_stateReadyForQuery: null, remove_stateReadyForQuery: null, get_iframe: null, get_handlerId: null, set_handlerId: null, handleVizLoad: null, handleVizListening: null, handleEventNotification: null });
+        ss.initInterface($tab_ICrossDomainMessageHandler, $asm, { add_customViewsListLoad: null, remove_customViewsListLoad: null, add_stateReadyForQuery: null, remove_stateReadyForQuery: null, get_iframe: null, get_hostId: null, set_hostId: null, handleVizLoad: null, handleVizListening: null, handleEventNotification: null });
         ss.initClass($tab_$DoNothingCrossDomainHandler, $asm, {
             add_customViewsListLoad: function DoNothingCrossDomainHandler$add_CustomViewsListLoad(value) {
                 this.$1$CustomViewsListLoadField = ss.delegateCombine(this.$1$CustomViewsListLoadField, value);
@@ -5055,11 +5104,11 @@
             get_iframe: function DoNothingCrossDomainHandler$get_Iframe() {
                 return null;
             },
-            get_handlerId: function DoNothingCrossDomainHandler$get_HandlerId() {
-                return this.$handlerId;
+            get_hostId: function DoNothingCrossDomainHandler$get_HostId() {
+                return this.$hostId;
             },
-            set_handlerId: function DoNothingCrossDomainHandler$set_HandlerId(value) {
-                this.$handlerId = value;
+            set_hostId: function DoNothingCrossDomainHandler$set_HostId(value) {
+                this.$hostId = value;
             },
             get_$serverRoot: function DoNothingCrossDomainHandler$get_ServerRoot() {
                 return '*';
@@ -5080,6 +5129,7 @@
                 return this.$filterCaption;
             }
         }, $tab_EventContext);
+        ss.initClass($tab_$HighlightEventContext, $asm, {}, $tab_EventContext);
         ss.initClass($tab_$MarkImpl, $asm, {
             get_$pairs: function MarkImpl$get_Pairs() {
                 return this.$collection;
@@ -5141,31 +5191,43 @@
         ss.initClass($tab_$PublicEnums, $asm, {});
         ss.initClass($tab__ApiBootstrap, $asm, {});
         ss.initClass($tab__ApiCommand, $asm, {
-            get_name: function ApiCommand$get_Name() {
-                return this.$name;
+            get_name: function() {
+                return this.$1$NameField;
             },
-            get_handlerId: function ApiCommand$get_HandlerId() {
-                return this.$handlerId;
+            set_name: function(value) {
+                this.$1$NameField = value;
             },
-            get_commandId: function ApiCommand$get_CommandId() {
-                return this.$commandId;
+            get_hostId: function() {
+                return this.$1$HostIdField;
             },
-            get_parameters: function ApiCommand$get_Parameters() {
-                return this.$parameters;
+            set_hostId: function(value) {
+                this.$1$HostIdField = value;
+            },
+            get_commandId: function() {
+                return this.$1$CommandIdField;
+            },
+            set_commandId: function(value) {
+                this.$1$CommandIdField = value;
+            },
+            get_parameters: function() {
+                return this.$1$ParametersField;
+            },
+            set_parameters: function(value) {
+                this.$1$ParametersField = value;
             },
             get_isApiCommandName: function ApiCommand$get_IsApiCommandName() {
                 return this.get_rawName().indexOf('api.', 0) === 0;
             },
             get_rawName: function ApiCommand$get_RawName() {
-                return this.$name.toString();
+                return this.get_name().toString();
             },
             serialize: function ApiCommand$Serialize() {
                 var message = [];
-                message.push(this.$name);
-                message.push(this.$commandId);
-                message.push(this.$handlerId);
-                if (ss.isValue(this.$parameters)) {
-                    message.push(this.$parameters);
+                message.push(this.get_name());
+                message.push(this.get_commandId());
+                message.push(this.get_hostId());
+                if (ss.isValue(this.get_parameters())) {
+                    message.push(this.get_parameters());
                 }
                 var serializedMessage = message.join(',');
                 $tab__ApiCommand.lastRequestMessage = serializedMessage;
@@ -5949,7 +6011,7 @@
                 } finally {
                     $t1.dispose();
                 }
-                url.push('&:apiID=' + this.handlerId);
+                url.push('&:apiID=' + this.hostId);
                 if (ss.isValue(this.$createOptions.instanceIdToClone)) {
                     url.push('#' + this.$createOptions.instanceIdToClone);
                 }
@@ -6954,7 +7016,7 @@
         ss.initEnum($tab_ApiSelectionUpdateType, $asm, { replace: 'replace', add: 'add', remove: 'remove' }, true);
         ss.initEnum($tab_ApiSheetSizeBehavior, $asm, { automatic: 'automatic', exactly: 'exactly', range: 'range', atleast: 'atleast', atmost: 'atmost' }, true);
         ss.initEnum($tab_ApiSheetType, $asm, { worksheet: 'worksheet', dashboard: 'dashboard', story: 'story' }, true);
-        ss.initEnum($tab_ApiTableauEventName, $asm, { customviewload: 'customviewload', customviewremove: 'customviewremove', customviewsave: 'customviewsave', customviewsetdefault: 'customviewsetdefault', filterchange: 'filterchange', firstinteractive: 'firstinteractive', firstvizsizeknown: 'firstvizsizeknown', marksselection: 'marksselection', parametervaluechange: 'parametervaluechange', storypointswitch: 'storypointswitch', tabswitch: 'tabswitch', vizresize: 'vizresize' }, true);
+        ss.initEnum($tab_ApiTableauEventName, $asm, { customviewload: 'customviewload', customviewremove: 'customviewremove', customviewsave: 'customviewsave', customviewsetdefault: 'customviewsetdefault', filterchange: 'filterchange', firstinteractive: 'firstinteractive', firstvizsizeknown: 'firstvizsizeknown', marksselection: 'marksselection', markshighlight: 'markshighlight', parametervaluechange: 'parametervaluechange', storypointswitch: 'storypointswitch', tabswitch: 'tabswitch', vizresize: 'vizresize' }, true);
         ss.initEnum($tab_ApiToolbarPosition, $asm, { top: 'top', bottom: 'bottom' }, true);
         ss.initClass($tab_CrossDomainMessagingOptions, $asm, {
             get_router: function CrossDomainMessagingOptions$get_Router() {
@@ -7008,6 +7070,12 @@
                 return this.$vizSize;
             }
         }, $tab_TableauEvent);
+        ss.initClass($tab_HighlightEvent, $asm, {
+            getHighlightedMarksAsync: function HighlightEvent$GetHighlightedMarksAsync() {
+                var worksheetImpl = this.$context.get__worksheetImpl();
+                return worksheetImpl.$getHighlightedMarksAsync();
+            }
+        }, $tab_WorksheetEvent);
         ss.initClass($tab_MarksEvent, $asm, {
             getMarksAsync: function MarksEvent$GetMarksAsync() {
                 var worksheetImpl = this.$context.get__worksheetImpl();
@@ -7066,6 +7134,12 @@
             remove_$marksSelection: function VizImpl$remove_MarksSelection(value) {
                 this.$1$MarksSelectionField = ss.delegateRemove(this.$1$MarksSelectionField, value);
             },
+            add_$marksHighlight: function VizImpl$add_MarksHighlight(value) {
+                this.$1$MarksHighlightField = ss.delegateCombine(this.$1$MarksHighlightField, value);
+            },
+            remove_$marksHighlight: function VizImpl$remove_MarksHighlight(value) {
+                this.$1$MarksHighlightField = ss.delegateRemove(this.$1$MarksHighlightField, value);
+            },
             add_$filterChange: function VizImpl$add_FilterChange(value) {
                 this.$1$FilterChangeField = ss.delegateCombine(this.$1$FilterChangeField, value);
             },
@@ -7120,11 +7194,11 @@
             remove_$vizResize: function VizImpl$remove_VizResize(value) {
                 this.$1$VizResizeField = ss.delegateRemove(this.$1$VizResizeField, value);
             },
-            get_handlerId: function VizImpl$get_HandlerId() {
-                return this.$parameters.handlerId;
+            get_hostId: function VizImpl$get_HostId() {
+                return this.$parameters.hostId;
             },
-            set_handlerId: function VizImpl$set_HandlerId(value) {
-                this.$parameters.handlerId = value;
+            set_hostId: function VizImpl$set_HostId(value) {
+                this.$parameters.hostId = value;
             },
             get_iframe: function VizImpl$get_Iframe() {
                 return this.$iframe;
@@ -7179,6 +7253,10 @@
                 this.$enableVisibleRectCommunication();
             },
             handleVizLoad: function VizImpl$HandleVizLoad() {
+                if (ss.isNullOrUndefined(this.$vizSize)) {
+                    this.$setFrameSize(this.$initialAvailableSize.width + 'px', this.$initialAvailableSize.height + 'px');
+                    this.$show();
+                }
                 if (ss.isValue(this.$staticImage)) {
                     this.$staticImage.style.display = 'none';
                 }
@@ -7262,6 +7340,9 @@
                     return;
                 }
                 var frameSize = this.$getNewFrameSize();
+                if (frameSize.height === this.$vizSize.chromeHeight) {
+                    return;
+                }
                 this.$setFrameSize(frameSize.width + 'px', frameSize.height + 'px');
                 var resizeAttempts = 10;
                 for (var i = 0; i < resizeAttempts; i++) {
@@ -7290,6 +7371,11 @@
                     case 'api.MarksSelectionChangedEvent':
                         {
                             this.$handleMarksSelectionChangedEvent(notification);
+                            break;
+                        }
+                    case 'api.MarksHighlightChangedEvent':
+                        {
+                            this.$handleMarksHighlightChangedEvent(notification);
                             break;
                         }
                     case 'api.FilterChangedEvent':
@@ -7343,6 +7429,11 @@
                     case 'marksselection':
                         {
                             this.add_$marksSelection(ss.cast(handler, Function));
+                            break;
+                        }
+                    case 'markshighlight':
+                        {
+                            this.add_$marksHighlight(ss.cast(handler, Function));
                             break;
                         }
                     case 'parametervaluechange':
@@ -7401,6 +7492,11 @@
                     case 'marksselection':
                         {
                             this.remove_$marksSelection(ss.cast(handler, Function));
+                            break;
+                        }
+                    case 'markshighlight':
+                        {
+                            this.remove_$marksHighlight(ss.cast(handler, Function));
                             break;
                         }
                     case 'parametervaluechange':
@@ -7732,6 +7828,26 @@
                     this.$1$MarksSelectionField(new $tab_MarksEvent('marksselection', this.$viz, worksheetImpl));
                 }
             },
+            $handleMarksHighlightChangedEvent: function VizImpl$HandleMarksHighlightChangedEvent(notification) {
+                if (ss.staticEquals(this.$1$MarksHighlightField, null) || !ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
+                    return;
+                }
+                var worksheetImpl = null;
+                var activeSheetImpl = this.$workbookImpl.get_activeSheetImpl();
+                if (activeSheetImpl.get_isStory()) {
+                    activeSheetImpl = ss.cast(activeSheetImpl, $tab__StoryImpl).get_activeStoryPointImpl().get_containedSheetImpl();
+                }
+                if (ss.referenceEquals(activeSheetImpl.get_name(), notification.get_worksheetName())) {
+                    worksheetImpl = ss.cast(activeSheetImpl, $tab__WorksheetImpl);
+                } else if (activeSheetImpl.get_isDashboard()) {
+                    var dashboardImpl = ss.cast(activeSheetImpl, $tab__DashboardImpl);
+                    worksheetImpl = dashboardImpl.get_worksheets()._get(notification.get_worksheetName())._impl;
+                }
+                if (ss.isValue(worksheetImpl)) {
+                    worksheetImpl.highlightedMarks = null;
+                    this.$1$MarksHighlightField(new $tab_HighlightEvent('markshighlight', this.$viz, worksheetImpl));
+                }
+            },
             $handleFilterChangedEvent: function VizImpl$HandleFilterChangedEvent(notification) {
                 if (ss.staticEquals(this.$1$FilterChangeField, null) || !ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
                     return;
@@ -7914,6 +8030,7 @@
                 ifr.frameBorder = '0';
                 ifr.setAttribute('allowTransparency', 'true');
                 ifr.setAttribute('allowFullScreen', 'true');
+                ifr.setAttribute('title', this.$getLocalizedTitle());
                 ifr.marginHeight = '0';
                 ifr.marginWidth = '0';
                 ifr.style.display = 'block';
@@ -7930,6 +8047,43 @@
                 }
                 this.$contentRootElement().appendChild(ifr);
                 return ifr;
+            },
+            $getLocalizedTitle: function VizImpl$GetLocalizedTitle() {
+                var lang = window.navigator.language;
+                if (lang === 'zh-CN') {
+                    return '数据可视化';
+                }
+                switch (lang.substr(0, 2)) {
+                    case 'fr':
+                        {
+                            return 'Visualisation de données';
+                        }
+                    case 'es':
+                        {
+                            return 'Visualización de datos';
+                        }
+                    case 'pt':
+                        {
+                            return 'Visualização de dados';
+                        }
+                    case 'ja':
+                        {
+                            return 'データ ビジュアライゼーション';
+                        }
+                    case 'de':
+                        {
+                            return 'Datenvisualisierung';
+                        }
+                    case 'ko':
+                        {
+                            return '데이터 비주얼리제이션';
+                        }
+                    case 'en':
+                    default:
+                        {
+                            return 'data visualization';
+                        }
+                }
             },
             $onIframeMouseWheel: function VizImpl$OnIframeMouseWheel(e) {},
             $getOnCheckForDoneDelegate: function VizImpl$GetOnCheckForDoneDelegate() {
@@ -8636,7 +8790,7 @@
             ns.SelectionUpdateType = { REPLACE: 'replace', ADD: 'add', REMOVE: 'remove' };
             ns.SheetSizeBehavior = { AUTOMATIC: 'automatic', EXACTLY: 'exactly', RANGE: 'range', ATLEAST: 'atleast', ATMOST: 'atmost' };
             ns.SheetType = { WORKSHEET: 'worksheet', DASHBOARD: 'dashboard', STORY: 'story' };
-            ns.TableauEventName = { CUSTOM_VIEW_LOAD: 'customviewload', CUSTOM_VIEW_REMOVE: 'customviewremove', CUSTOM_VIEW_SAVE: 'customviewsave', CUSTOM_VIEW_SET_DEFAULT: 'customviewsetdefault', FILTER_CHANGE: 'filterchange', FIRST_INTERACTIVE: 'firstinteractive', FIRST_VIZ_SIZE_KNOWN: 'firstvizsizeknown', MARKS_SELECTION: 'marksselection', PARAMETER_VALUE_CHANGE: 'parametervaluechange', STORY_POINT_SWITCH: 'storypointswitch', TAB_SWITCH: 'tabswitch', VIZ_RESIZE: 'vizresize' };
+            ns.TableauEventName = { CUSTOM_VIEW_LOAD: 'customviewload', CUSTOM_VIEW_REMOVE: 'customviewremove', CUSTOM_VIEW_SAVE: 'customviewsave', CUSTOM_VIEW_SET_DEFAULT: 'customviewsetdefault', FILTER_CHANGE: 'filterchange', FIRST_INTERACTIVE: 'firstinteractive', FIRST_VIZ_SIZE_KNOWN: 'firstvizsizeknown', MARKS_SELECTION: 'marksselection', MARKS_HIGHLIGHT: 'markshighlight', PARAMETER_VALUE_CHANGE: 'parametervaluechange', STORY_POINT_SWITCH: 'storypointswitch', TAB_SWITCH: 'tabswitch', VIZ_RESIZE: 'vizresize' };
             ns.ToolbarPosition = { TOP: 'top', BOTTOM: 'bottom' };
         })();
         (function() {
@@ -8650,7 +8804,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 1, 1, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 1, 2, 'null');
         })();
     })();
 

@@ -4,12 +4,26 @@ This is a collection of all tableau-2.*.js files available on https://public.tab
 
 This is an archive to help show the changes between versions.
 
-In addition, an file called tableau-2.latest.js has been added with commits for each version, to show the history of changes over a single file.
+In addition, a file called tableau-2.latest.js has been added with commits for each version, to show the history of changes over a single file.
 
-The latest version of the Tableau JS API can be used by calling https://public.tableau.com/javascripts/api/tableau-2.js (the latest version is visible in the code).
+## Don't Use This
 
-The latest *minified* version of the Tableau JS API can be used by calling https://public.tableau.com/javascripts/api/tableau-2.min.js (the latest version is visible in the code).
+**This repo is an archive only for learning & historical purposes: it's completely unofficial and not for direct use in development or production.**
 
-This is the only available changelog from Tableau: https://help.tableau.com/current/api/js_api/en-us/JavaScriptAPI/js_api_whats_new.htm
+## Official Tableau JS API Resources
+[Tableau JS API documentation](https://help.tableau.com/current/api/js_api/en-us/JavaScriptAPI/js_api.htm).
 
-This page enumerates which version is associated with each Tableau Server version: https://help.tableau.com/current/api/js_api/en-us/JavaScriptAPI/js_api_concepts_get_API.htm
+[Tableau JS API samples on Github](https://github.com/tableau/js-api-samples).
+
+[Tableau JS API changelog](https://help.tableau.com/current/api/js_api/en-us/JavaScriptAPI/js_api_whats_new.htm).
+
+[Tableau JS API verrsion associated with each Tableau Server version](https://help.tableau.com/current/api/js_api/en-us/JavaScriptAPI/js_api_concepts_get_API.htm).
+
+## tableau-2.js and tableau-2.min.js
+The Tableau JS API can be called with these files that automatically build a reference to the latest version:
+* https://public.tableau.com/javascripts/api/tableau-2.js
+* https://public.tableau.com/javascripts/api/tableau-2.min.js (minified)
+* https://*YOUR-SERVER*/javascripts/api/tableau-2.js
+* https://*YOUR-SERVER*/javascripts/api/tableau-2.min.js (minified)
+
+The latest available version is visible in the code.

@@ -1,4 +1,4 @@
-/*! tableau-2.0.2 */
+/*! tableau-2.0.3 */
 (function() {
 
 
@@ -1932,18 +1932,16 @@
         $tab_WindowHelper.setTimeout = function WindowHelper$SetTimeout(callback, milliseconds) {
             window.setTimeout(callback, milliseconds);
         };
-        $tab_WindowHelper.addListener = function WindowHelper$AddListener(window, eventName, messageListener) {
-            var addEventListener = ss.mkdel(window, window.addEventListener);
-            if (ss.isValue(addEventListener)) {
-                addEventListener(eventName, messageListener, false);
+        $tab_WindowHelper.addListener = function WindowHelper$AddListener(windowParam, eventName, messageListener) {
+            if ('addEventListener' in windowParam) {
+                windowParam.addEventListener(eventName, messageListener, false);
             } else {
-                window.attachEvent('on' + eventName, messageListener);
+                windowParam.attachEvent('on' + eventName, messageListener);
             }
         };
         $tab_WindowHelper.removeListener = function WindowHelper$RemoveListener(window, eventName, messageListener) {
-            var removeEventListener = ss.mkdel(window, window.removeEventListener);
-            if (ss.isValue(removeEventListener)) {
-                removeEventListener(eventName, messageListener, false);
+            if ('removeEventListener' in window) {
+                window.removeEventListener(eventName, messageListener, false);
             } else {
                 window.detachEvent('on' + eventName, messageListener);
             }
@@ -3365,7 +3363,9 @@
             this.height = null;
             this.parentElement = null;
             this.userSuppliedParameters = null;
+            this.staticImageUrl = null;
             this.fixedSize = false;
+            this.displayStaticImage = false;
             this.$urlFromApi = null;
             this.$createOptions = null;
             if (ss.isNullOrUndefined(element) || ss.isNullOrUndefined(url)) {
@@ -3390,6 +3390,8 @@
             } else {
                 this.fixedSize = false;
             }
+            this.displayStaticImage = options.displayStaticImage || false;
+            this.staticImageUrl = options.staticImageUrl || '';
             this.tabs = !(options.hideTabs || false);
             this.toolbar = !(options.hideToolbar || false);
             this.parentElement = element;
@@ -4505,6 +4507,7 @@
             this.$workbookTabSwitchHandler = null;
             this.$viz = null;
             this.$iframe = null;
+            this.$staticImage = null;
             this.$parameters = null;
             this.$initialAvailableSize = null;
             this.$instanceId = null;
@@ -5877,6 +5880,9 @@
                 if (!this.tabs) {
                     url.push('&:tabs=n');
                 }
+                if (this.displayStaticImage) {
+                    url.push('&:display_static_image=y');
+                }
                 if (!this.toolbar) {
                     url.push('&:toolbar=n');
                 } else if (!ss.isNullOrUndefined(this.toolBarPosition)) {
@@ -5888,7 +5894,7 @@
                 try {
                     while ($t1.moveNext()) {
                         var entry = $t1.current();
-                        if (entry.key !== 'embed' && entry.key !== 'height' && entry.key !== 'width' && entry.key !== 'autoSize' && entry.key !== 'hideTabs' && entry.key !== 'hideToolbar' && entry.key !== 'onFirstInteractive' && entry.key !== 'onFirstVizSizeKnown' && entry.key !== 'toolbarPosition' && entry.key !== 'instanceIdToClone') {
+                        if (entry.key !== 'embed' && entry.key !== 'height' && entry.key !== 'width' && entry.key !== 'autoSize' && entry.key !== 'hideTabs' && entry.key !== 'hideToolbar' && entry.key !== 'onFirstInteractive' && entry.key !== 'onFirstVizSizeKnown' && entry.key !== 'toolbarPosition' && entry.key !== 'instanceIdToClone' && entry.key !== 'display_static_image') {
                             url.push('&');
                             url.push(encodeURIComponent(entry.key));
                             url.push('=');
@@ -7028,6 +7034,9 @@
                 this.$enableVisibleRectCommunication();
             },
             handleVizLoad: function VizImpl$HandleVizLoad() {
+                if (ss.isValue(this.$staticImage)) {
+                    this.$staticImage.style.display = 'none';
+                }
                 if (ss.isNullOrUndefined(this.$workbookImpl)) {
                     this.$workbookImpl = new $tab__WorkbookImpl(this, this.$messagingOptions, ss.mkdel(this, function() {
                         this.$onWorkbookInteractive(null);
@@ -7394,7 +7403,15 @@
                     }
                     this.$iframe = this.$createIframe();
                     this.$makeInvisible();
+                    if (this.$parameters.displayStaticImage) {
+                        this.$staticImage = this.$createStaticImageElement(this.$initialAvailableSize);
+                        this.$staticImage.style.display = 'block';
+                    }
                 } else {
+                    if (this.$parameters.displayStaticImage) {
+                        this.$staticImage = this.$createStaticImageElement($tab_Size.$ctor(parseInt(this.$parameters.width), parseInt(this.$parameters.height)));
+                        this.$staticImage.style.display = 'block';
+                    }
                     this.$iframe = this.$createIframe();
                     this.$show();
                 }
@@ -7546,8 +7563,9 @@
             $handleVizInteractiveEvent: function VizImpl$HandleVizInteractiveEvent(notification) {
                 if (ss.isValue(this.$workbookImpl) && ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
                     this.$onWorkbookInteractive(null);
+                } else {
+                    this.$raiseStateReadyForQuery();
                 }
-                this.$raiseStateReadyForQuery();
             },
             $handleMarksSelectionChangedEvent: function VizImpl$HandleMarksSelectionChangedEvent(notification) {
                 if (ss.staticEquals(this.$1$MarksSelectionField, null) || !ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
@@ -7624,9 +7642,7 @@
             $handleCustomViewUpdatedEvent: function VizImpl$HandleCustomViewUpdatedEvent(notification) {
                 var info = JSON.parse(ss.cast(notification.get_data(), String));
                 if (ss.isNullOrUndefined(this.$workbookImpl)) {
-                    this.$workbookImpl = new $tab__WorkbookImpl(this, this.$messagingOptions, ss.mkdel(this, function() {
-                        this.$onWorkbookInteractive(null);
-                    }));
+                    this.$workbookImpl = new $tab__WorkbookImpl(this, this.$messagingOptions, null);
                 }
                 if (ss.isValue(this.$workbookImpl)) {
                     $tab__CustomViewImpl._processCustomViewUpdate(this.$workbookImpl, this.$messagingOptions, info, true);
@@ -7651,10 +7667,14 @@
                 if (ss.isValue(this.$workbookImpl)) {
                     $tab__CustomViewImpl._processCustomViews(this.$workbookImpl, this.$messagingOptions, info);
                 }
-                if (!ss.staticEquals(this.$1$CustomViewSetDefaultField, null)) {
-                    var updated = this.$workbookImpl.get_$updatedCustomViews()._toApiCollection();
-                    for (var i = 0, len = updated.length; i < len; i++) {
-                        this.$raiseCustomViewSetDefault(updated[i]);
+                if (!ss.staticEquals(this.$1$CustomViewSetDefaultField, null) && ss.isValue(info.defaultCustomViewId)) {
+                    var views = this.$workbookImpl.get_$customViews();
+                    for (var i = 0; i < views.get__length(); i++) {
+                        var view = views.get_item(i);
+                        if (view.getDefault()) {
+                            this.$raiseCustomViewSetDefault(view);
+                            break;
+                        }
                     }
                 }
             },
@@ -7718,6 +7738,19 @@
             },
             $onCheckForDone: function VizImpl$OnCheckForDone() {
                 window.setTimeout(ss.mkdel(this, this.$checkForDone), 3000);
+            },
+            $createStaticImageElement: function VizImpl$CreateStaticImageElement(initialSize) {
+                var $t1 = document.createElement('div');
+                var img = ss.cast($t1, ss.isValue($t1) && (ss.isInstanceOfType($t1, Element) && $t1.tagName === 'DIV'));
+                img.style.background = "transparent url('" + this.$parameters.staticImageUrl + "') no-repeat scroll 0 0";
+                img.style.left = '8px';
+                img.style.top = (this.$parameters.tabs ? '31px' : '9px');
+                img.style.position = 'absolute';
+                var size = this.$initialAvailableSize;
+                img.style.width = initialSize.width + 'px';
+                img.style.height = initialSize.height + 'px';
+                this.$contentRootElement().appendChild(img);
+                return img;
             },
             $createIframe: function VizImpl$CreateIframe() {
                 if (ss.isNullOrUndefined(this.$contentRootElement())) {
@@ -8415,7 +8448,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 0, 2, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 0, 3, 'null');
         })();
     })();
 

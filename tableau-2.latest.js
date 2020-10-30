@@ -1,4 +1,4 @@
-/*! tableau-2.2.1 */
+/*! tableau-2.2.2 */
 (function() {
 
 
@@ -1872,16 +1872,61 @@
         global.tab = global.tab || {};
         ss.initAssembly($asm, 'tabcoreslim');
         ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.BaseLogAppender
+        var $tab_BaseLogAppender = function() {
+            this.$filters = null;
+            this.$filters = [];
+        };
+        $tab_BaseLogAppender.__typeName = 'tab.BaseLogAppender';
+        global.tab.BaseLogAppender = $tab_BaseLogAppender;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.ConsoleLogAppender
+        var $tab_ConsoleLogAppender = function() {
+            this.$levelMethods = null;
+            $tab_BaseLogAppender.call(this);
+        };
+        $tab_ConsoleLogAppender.__typeName = 'tab.ConsoleLogAppender';
+        global.tab.ConsoleLogAppender = $tab_ConsoleLogAppender;
+        ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.CoreSlim.CookieHelper
         var $tab_CookieHelper = function() {};
         $tab_CookieHelper.__typeName = 'tab.CookieHelper';
-        $tab_CookieHelper.getCookie = function CookieHelper$GetCookie() {
-            return document.cookie;
+        $tab_CookieHelper.getValueForCookie = function CookieHelper$GetValueForCookie(name) {
+            var parsedCookie = $tab_DocumentHelper.getCookie().match(new RegExp('(?:^|;) ?' + name + '=([^;]*)(?:;|$)'));
+            if (ss.isNullOrUndefined(parsedCookie) || parsedCookie.length < 2) {
+                return null;
+            }
+            return parsedCookie[1];
         };
-        $tab_CookieHelper.setCookie = function CookieHelper$SetCookie(value) {
-            document.cookie = value;
+        $tab_CookieHelper.setCookie = function CookieHelper$SetCookie(name, value, path, expirationDate) {
+            var cookieValue = name + '=' + value + ';path=' + path + ';';
+            if (!ss.staticEquals(expirationDate, null)) {
+                cookieValue += 'expires=' + expirationDate.toUTCString();
+            }
+            $tab_DocumentHelper.setCookie(cookieValue);
+        };
+        $tab_CookieHelper.deleteCookie = function CookieHelper$DeleteCookie(name, path) {
+            var epochTime = new Date(0);
+            $tab_DocumentHelper.setCookie(name + '=;path=' + path + ';expires=' + epochTime.toUTCString());
         };
         global.tab.CookieHelper = $tab_CookieHelper;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.CoreSlim.DocumentHelper
+        var $tab_DocumentHelper = function() {};
+        $tab_DocumentHelper.__typeName = 'tab.DocumentHelper';
+        $tab_DocumentHelper.get_documentClientWidth = function DocumentHelper$get_DocumentClientWidth() {
+            return document.documentElement.clientWidth;
+        };
+        $tab_DocumentHelper.get_documentClientHeight = function DocumentHelper$get_DocumentClientHeight() {
+            return document.documentElement.clientHeight;
+        };
+        $tab_DocumentHelper.getCookie = function DocumentHelper$GetCookie() {
+            return document.cookie;
+        };
+        $tab_DocumentHelper.setCookie = function DocumentHelper$SetCookie(value) {
+            document.cookie = value;
+        };
+        global.tab.DocumentHelper = $tab_DocumentHelper;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.CoreSlim.EscapingUtil
         var $tab_EscapingUtil = function() {};
@@ -1894,14 +1939,215 @@
             escaped = escaped.replace(new RegExp('"', 'g'), '&quot;');
             escaped = escaped.replace(new RegExp("'", 'g'), '&#39;');
             escaped = escaped.replace(new RegExp('/', 'g'), '&#47;');
+            if ((new RegExp('^ +$')).test(escaped)) {
+                escaped = escaped.replace(new RegExp(' ', 'g'), '&nbsp;');
+            }
             return escaped;
         };
         global.tab.EscapingUtil = $tab_EscapingUtil;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.LazyUtil
+        var $tab_LazyUtil = function() {};
+        $tab_LazyUtil.__typeName = 'tab.LazyUtil';
+        $tab_LazyUtil.lazyInitStaticField = function LazyUtil$LazyInitStaticField(t, fieldName, initializer) {
+            var value = t[fieldName];
+            if (ss.isNullOrUndefined(value)) {
+                value = initializer();
+                t[fieldName] = value;
+            }
+            return value;
+        };
+        global.tab.LazyUtil = $tab_LazyUtil;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.Log
+        var $tab_Log = function() {};
+        $tab_Log.__typeName = 'tab.Log';
+        $tab_Log.get = function Log$Get(o) {
+            return $tab_Logger.lazyGetLogger(ss.getInstanceType(o));
+        };
+        $tab_Log.get$1 = function Log$Get(t) {
+            return $tab_Logger.lazyGetLogger(t);
+        };
+        global.tab.Log = $tab_Log;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.LogAppenderInstance
+        var $tab_LogAppenderInstance = function(appenderFactoryFunc) {
+            this.$appenderFactoryFunc = null;
+            this.$1$InstanceField = null;
+            this.$appenderFactoryFunc = appenderFactoryFunc;
+        };
+        $tab_LogAppenderInstance.__typeName = 'tab.LogAppenderInstance';
+        global.tab.LogAppenderInstance = $tab_LogAppenderInstance;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.Logger
+        var $tab_Logger = function(name) {
+            this.$name = null;
+            this.$name = name;
+        };
+        $tab_Logger.__typeName = 'tab.Logger';
+        $tab_Logger.get_globalLog = function Logger$get_GlobalLog() {
+            return $tab_Logger.global;
+        };
+        $tab_Logger.get_$appenders = function Logger$get_Appenders() {
+            return $tab_LazyUtil.lazyInitStaticField($tab_Logger, 'appenders', function() {
+                return [];
+            });
+        };
+        $tab_Logger.get_$filters = function Logger$get_Filters() {
+            return $tab_LazyUtil.lazyInitStaticField($tab_Logger, 'filters', function() {
+                return [];
+            });
+        };
+        $tab_Logger.get_$nullLog = function Logger$get_NullLog() {
+            return ss.cast($tab_LazyUtil.lazyInitStaticField($tab_Logger, 'nullLog', function() {
+                return new $tab_Logger('');
+            }), $tab_Logger);
+        };
+        $tab_Logger.clearFilters = function Logger$ClearFilters() {
+            var $t1 = $tab_Logger.get_$appenders();
+            for (var $t2 = 0; $t2 < $t1.length; $t2++) {
+                var logAppender = $t1[$t2];
+                logAppender.clearFilters();
+            }
+            $tab_Logger.get_$filters().splice(0, $tab_Logger.get_$filters().length);
+        };
+        $tab_Logger.filterByLogger = function Logger$FilterByLogger(validLogger, minLogLevel) {
+            minLogLevel = minLogLevel || 0;
+            $tab_Logger.$addFilter(function(l, ll) {
+                return ss.referenceEquals(l, validLogger) && ll >= minLogLevel;
+            });
+        };
+        $tab_Logger.filterByType = function Logger$FilterByType(t, minLogLevel) {
+            minLogLevel = minLogLevel || 0;
+            $tab_Logger.$addFilter(function(l, ll) {
+                return ll >= minLogLevel && ss.referenceEquals(l.get_name(), ss.getTypeName(t));
+            });
+        };
+        $tab_Logger.filterByName = function Logger$FilterByName(namePattern, minLogLevel) {
+            minLogLevel = minLogLevel || 0;
+            var regex = new RegExp(namePattern, 'i');
+            $tab_Logger.$addFilter(function(l, ll) {
+                return ll >= minLogLevel && ss.isValue(l.get_name().match(regex));
+            });
+        };
+        $tab_Logger.clearAppenders = function Logger$ClearAppenders() {
+            $tab_Logger.get_$appenders().splice(0, $tab_Logger.get_$filters().length);
+        };
+        $tab_Logger.hasAppender = function Logger$HasAppender(appender) {
+            return $tab_Logger.get_$appenders().indexOf(appender) > -1;
+        };
+        $tab_Logger.addAppender = function Logger$AddAppender(appender) {
+            var $t1 = $tab_Logger.get_$filters();
+            for (var $t2 = 0; $t2 < $t1.length; $t2++) {
+                var filter = $t1[$t2];
+                appender.addFilter(filter);
+            }
+            $tab_Logger.get_$appenders().push(appender);
+        };
+        $tab_Logger.removeAppender = function Logger$RemoveAppender(appender) {
+            var indexOfAppender = $tab_Logger.get_$appenders().indexOf(appender);
+            if (indexOfAppender > -1) {
+                $tab_Logger.get_$appenders().splice(indexOfAppender, 1);
+            }
+        };
+        $tab_Logger.lazyGetLogger = function Logger$LazyGetLogger(t) {
+            return $tab_LazyUtil.lazyInitStaticField(t, '_logger', function() {
+                return $tab_Logger.getLogger(t, null);
+            });
+        };
+        $tab_Logger.getLogger = function Logger$GetLogger(t, ll) {
+            var l = $tab_Logger.getLoggerWithName(ss.getTypeName(t));
+            if (ss.isValue(ll)) {
+                $tab_Logger.filterByLogger(l, ss.unbox(ll));
+            }
+            return l;
+        };
+        $tab_Logger.getLoggerWithName = function Logger$GetLoggerWithName(name) {
+            return new $tab_Logger(name);
+        };
+        $tab_Logger.$setupUrlFilters = function Logger$SetupUrlFilters() {
+            var queryParams = $tab_UriExtensions.getUriQueryParameters(window.self.location.search);
+            if (!ss.keyExists(queryParams, $tab_Logger.$logQueryParam)) {
+                return;
+            }
+            $tab_Logger.clearFilters();
+            var logParams = queryParams[$tab_Logger.$logQueryParam];
+            if (logParams.length === 0) {
+                $tab_Logger.filterByName('.*', 0);
+            }
+            for (var $t1 = 0; $t1 < logParams.length; $t1++) {
+                var logParam = logParams[$t1];
+                var logVals = logParam.split(String.fromCharCode(58));
+                var level = 1;
+                if (logVals.length > 0 && ss.isValue(logVals[1])) {
+                    var key = logVals[1].toLowerCase();
+                    var index = $tab_Logger.loggerLevelNames.indexOf(key);
+                    if (index >= 0) {
+                        level = index;
+                    }
+                }
+                $tab_Logger.filterByName(logVals[0], level);
+            }
+        };
+        $tab_Logger.$addFilter = function Logger$AddFilter(filterFunc) {
+            $tab_Logger.get_$filters().push(filterFunc);
+            var $t1 = $tab_Logger.get_$appenders();
+            for (var $t2 = 0; $t2 < $t1.length; $t2++) {
+                var logAppender = $t1[$t2];
+                logAppender.addFilter(filterFunc);
+            }
+        };
+        global.tab.Logger = $tab_Logger;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.LoggerLevel
+        var $tab_LoggerLevel = function() {};
+        $tab_LoggerLevel.__typeName = 'tab.LoggerLevel';
+        global.tab.LoggerLevel = $tab_LoggerLevel;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Core.ScriptEx
         var $tab_ScriptEx = function() {};
         $tab_ScriptEx.__typeName = 'tab.ScriptEx';
         global.tab.ScriptEx = $tab_ScriptEx;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Core.UriExtensions
+        var $tab_UriExtensions = function() {};
+        $tab_UriExtensions.__typeName = 'tab.UriExtensions';
+        $tab_UriExtensions.getUriQueryParameters = function UriExtensions$GetUriQueryParameters(uri) {
+            var parameters = {};
+            if (ss.isNullOrUndefined(uri)) {
+                return parameters;
+            }
+            var indexOfQuery = uri.indexOf('?');
+            if (indexOfQuery < 0) {
+                return parameters;
+            }
+            var query = uri.substr(indexOfQuery + 1);
+            var indexOfHash = query.indexOf('#');
+            if (indexOfHash >= 0) {
+                query = query.substr(0, indexOfHash);
+            }
+            if (ss.isNullOrEmptyString(query)) {
+                return parameters;
+            }
+            var paramPairs = query.split('&');
+            for (var $t1 = 0; $t1 < paramPairs.length; $t1++) {
+                var pair = paramPairs[$t1];
+                var keyValue = pair.split('=');
+                var key = decodeURIComponent(keyValue[0]);
+                var values;
+                if (ss.keyExists(parameters, key)) {
+                    values = parameters[key];
+                } else {
+                    values = [];
+                    parameters[key] = values;
+                }
+                if (keyValue.length > 1) {
+                    values.push(decodeURIComponent(keyValue[1]));
+                }
+            }
+            return parameters;
+        };
+        global.tab.UriExtensions = $tab_UriExtensions;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.CoreSlim.WindowHelper
         var $tab_WindowHelper = function(window) {
@@ -1918,7 +2164,8 @@
         $tab_WindowHelper.get_selection = function WindowHelper$get_Selection() {
             if (typeof(window['getSelection']) === 'function') {
                 return window.getSelection();
-            } else if (typeof(document['getSelection']) === 'function') {
+            }
+            if (typeof(document['getSelection']) === 'function') {
                 return document.getSelection();
             }
             return null;
@@ -1996,9 +2243,158 @@
             }
         };
         global.tab.WindowHelper = $tab_WindowHelper;
+        ss.initClass($tab_BaseLogAppender, $asm, {
+            clearFilters: function BaseLogAppender$ClearFilters() {
+                ss.clear(this.$filters);
+            },
+            addFilter: function BaseLogAppender$AddFilter(f) {
+                this.$filters.push(f);
+            },
+            removeFilter: function BaseLogAppender$RemoveFilter(f) {
+                ss.remove(this.$filters, f);
+            },
+            log: function BaseLogAppender$Log(source, level, message, args) {
+                for (var $t1 = 0; $t1 < this.$filters.length; $t1++) {
+                    var filter = this.$filters[$t1];
+                    if (!filter(source, level)) {
+                        continue;
+                    }
+                    this.logInternal(source, level, message, args);
+                    return;
+                }
+            },
+            logInternal: null,
+            formatMessage: function BaseLogAppender$FormatMessage(message, args) {
+                if (ss.isNullOrUndefined(args) || args.length === 0) {
+                    return message;
+                }
+                var sb = new ss.StringBuilder();
+                var argNum = 0;
+                var prevPercent = false;
+                for (var i = 0; i < message.length; i++) {
+                    var currChar = message.charCodeAt(i);
+                    if (currChar === 37) {
+                        if (prevPercent) {
+                            sb.append('%');
+                            prevPercent = false;
+                        } else {
+                            prevPercent = true;
+                        }
+                    } else {
+                        if (prevPercent) {
+                            switch (currChar) {
+                                case 98:
+                                case 115:
+                                case 100:
+                                case 110:
+                                case 111:
+                                    {
+                                        sb.append(((args.length > argNum) ? args[argNum] : ''));
+                                        argNum++;
+                                        break;
+                                    }
+                            }
+                        } else {
+                            sb.appendChar(currChar);
+                        }
+                        prevPercent = false;
+                    }
+                }
+                return sb.toString();
+            }
+        });
+        ss.initClass($tab_ConsoleLogAppender, $asm, {
+            logInternal: function ConsoleLogAppender$LogInternal(source, level, message, args) {
+                if (!!(typeof(window.console) !== 'object')) {
+                    return;
+                }
+                message = source.get_name() + ': ' + message;
+                var consoleArgs = [];
+                var $t1 = consoleArgs.concat(message);
+                consoleArgs = $t1.concat.apply($t1, args);
+                try {
+                    Function.prototype.apply.call(this.$getConsoleMethod(level), window.console, consoleArgs);
+                } catch ($t2) {}
+            },
+            $getConsoleMethod: function ConsoleLogAppender$GetConsoleMethod(level) {
+                var console = window.self['console'];
+                if (ss.isNullOrUndefined(this.$levelMethods)) {
+                    this.$levelMethods = {};
+                    this.$levelMethods[(1).toString()] = console.log;
+                    this.$levelMethods[(4).toString()] = console.error;
+                    this.$levelMethods[(2).toString()] = console.info;
+                    this.$levelMethods[(3).toString()] = console.warn;
+                }
+                var $t1 = this.$levelMethods[level.toString()];
+                if (ss.isNullOrUndefined($t1)) {
+                    $t1 = console.log;
+                }
+                return $t1;
+            }
+        }, $tab_BaseLogAppender);
         ss.initClass($tab_CookieHelper, $asm, {});
+        ss.initClass($tab_DocumentHelper, $asm, {});
         ss.initClass($tab_EscapingUtil, $asm, {});
+        ss.initClass($tab_LazyUtil, $asm, {});
+        ss.initClass($tab_Log, $asm, {});
+        ss.initClass($tab_LogAppenderInstance, $asm, {
+            get_instance: function LogAppenderInstance$get_Instance() {
+                return this.$1$InstanceField;
+            },
+            set_instance: function LogAppenderInstance$set_Instance(value) {
+                this.$1$InstanceField = value;
+            },
+            enableLogging: function LogAppenderInstance$EnableLogging(filter) {
+                if (ss.isNullOrUndefined(this.get_instance())) {
+                    this.set_instance(this.$appenderFactoryFunc());
+                    $tab_Logger.addAppender(this.get_instance());
+                } else if (!$tab_Logger.hasAppender(this.get_instance())) {
+                    $tab_Logger.addAppender(this.get_instance());
+                }
+                this.get_instance().addFilter(ss.coalesce(filter, function(_, __) {
+                    return true;
+                }));
+            },
+            disableLogging: function LogAppenderInstance$DisableLogging() {
+                if (ss.isNullOrUndefined(this.get_instance())) {
+                    return;
+                }
+                $tab_Logger.removeAppender(this.get_instance());
+                this.set_instance(null);
+            }
+        });
+        ss.initClass($tab_Logger, $asm, {
+            get_name: function Logger$get_Name() {
+                return this.$name;
+            },
+            debug: function Logger$Debug(message, args) {
+                this.$logInternal(1, message, args);
+            },
+            info: function Logger$Info(message, args) {
+                this.$logInternal(2, message, args);
+            },
+            warn: function Logger$Warn(message, args) {
+                this.$logInternal(3, message, args);
+            },
+            error: function Logger$Error(message, args) {
+                this.$logInternal(4, message, args);
+            },
+            log: function Logger$Log(level, message, args) {
+                this.$logInternal(level, message, args);
+            },
+            $logInternal: function Logger$LogInternal(level, message, args) {
+                try {
+                    var $t1 = $tab_Logger.get_$appenders();
+                    for (var $t2 = 0; $t2 < $t1.length; $t2++) {
+                        var logAppender = $t1[$t2];
+                        logAppender.log(this, level, message, args);
+                    }
+                } catch ($t3) {}
+            }
+        });
+        ss.initEnum($tab_LoggerLevel, $asm, { all: 0, debug: 1, info: 2, warn: 3, error: 4, off: 5 });
         ss.initClass($tab_ScriptEx, $asm, {});
+        ss.initClass($tab_UriExtensions, $asm, {});
         ss.initClass($tab_WindowHelper, $asm, {
             get_pageXOffset: function WindowHelper$get_PageXOffset() {
                 return $tab_WindowHelper.$pageXOffsetFunc(this.$window);
@@ -2035,6 +2431,27 @@
             }
         });
         (function() {
+            $tab_Logger.global = $tab_Logger.getLoggerWithName('global');
+            $tab_Logger.loggerLevelNames = [];
+            $tab_Logger.$logQueryParam = ':log';
+            $tab_Logger.$setupUrlFilters();
+            $tab_Logger.loggerLevelNames[0] = 'all';
+            $tab_Logger.loggerLevelNames[1] = 'debug';
+            $tab_Logger.loggerLevelNames[2] = 'info';
+            $tab_Logger.loggerLevelNames[3] = 'warn';
+            $tab_Logger.loggerLevelNames[4] = 'error';
+            $tab_Logger.loggerLevelNames[5] = 'off';
+        })();
+        (function() {
+            $tab_ConsoleLogAppender.globalAppender = new $tab_LogAppenderInstance(function() {
+                return new $tab_ConsoleLogAppender();
+            });
+            $tab_ConsoleLogAppender.globalAppender.enableLogging(function(_, loggerLevel) {
+                return loggerLevel >= 2;
+            });
+        })();
+        (function() {
+            $tab_WindowHelper.blank = '_blank';
             $tab_WindowHelper.$innerWidthFunc = null;
             $tab_WindowHelper.$innerHeightFunc = null;
             $tab_WindowHelper.$clientWidthFunc = null;
@@ -2173,9 +2590,7 @@
                         window[cancelFuncName](animationId);
                     };
                 } else {
-                    $tab_WindowHelper.$cancelAnimationFrameFunc = function(id) {
-                        window.clearTimeout(id);
-                    };
+                    $tab_WindowHelper.$cancelAnimationFrameFunc = window.clearTimeout;
                 }
             }
         })();
@@ -2754,15 +3169,32 @@
                     visibleRect = visibleRect.intersect($tab__Utility.contentRectInDocumentCoordinates(currentElement));
                 }
             }
-            var viewportRect = $tab__Utility.contentRectInDocumentCoordinates(document.documentElement);
-            var win = new tab.WindowHelper(window.self);
-            if (win.isQuirksMode()) {
-                viewportRect.height = document.body.clientHeight - viewportRect.left;
-                viewportRect.width = document.body.clientWidth - viewportRect.top;
-            }
-            viewportRect.left += win.get_pageXOffset();
-            viewportRect.top += win.get_pageYOffset();
+            var viewportRect = $tab__Utility.$getViewportRect();
             return visibleRect.intersect(viewportRect);
+        };
+        $tab__Utility.getVisualViewportRect = function Utility$GetVisualViewportRect(window) {
+            var visualViewport = window.visualViewport;
+            if (ss.isValue(visualViewport)) {
+                return new $tab__Rect(ss.Int32.trunc(visualViewport.pageLeft), ss.Int32.trunc(visualViewport.pageTop), ss.Int32.trunc(visualViewport.width), ss.Int32.trunc(visualViewport.height));
+            } else {
+                return null;
+            }
+        };
+        $tab__Utility.$getViewportRect = function Utility$GetViewportRect() {
+            var visualViewportRect = $tab__Utility.getVisualViewportRect(window.self);
+            if (ss.isValue(visualViewportRect)) {
+                return visualViewportRect;
+            } else {
+                var viewportRect = $tab__Utility.contentRectInDocumentCoordinates(document.documentElement);
+                var win = new tab.WindowHelper(window.self);
+                if (win.isQuirksMode()) {
+                    viewportRect.height = document.body.clientHeight - viewportRect.left;
+                    viewportRect.width = document.body.clientWidth - viewportRect.top;
+                }
+                viewportRect.left += win.get_pageXOffset();
+                viewportRect.top += win.get_pageYOffset();
+                return viewportRect;
+            }
         };
         $tab__Utility.contentRectInDocumentCoordinates = function Utility$ContentRectInDocumentCoordinates(element) {
             var boundingClientRect = $tab__Utility.getBoundingClientRect(element);
@@ -4445,7 +4877,7 @@
                 return fixedUpFilterOptions;
             },
             createFilterCommandReturnHandler: function FilterCommandsBuilder$CreateFilterCommandReturnHandler(commandName, fieldName, deferred) {
-                return new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))(commandName, 1, ss.mkdel(this, function(result) {
+                return new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))(commandName, 0, ss.mkdel(this, function(result) {
                     var error = this.filterCommandError(result);
                     if (ss.isNullOrUndefined(error)) {
                         deferred.resolve(fieldName);
@@ -4883,40 +5315,44 @@
         $tab__CustomViewImpl._processCustomViews = function CustomViewImpl$ProcessCustomViews(workbookImpl, messagingOptions, info) {
             $tab__CustomViewImpl._processCustomViewUpdate(workbookImpl, messagingOptions, info, false);
         };
-        $tab__CustomViewImpl._processCustomViewUpdate = function CustomViewImpl$ProcessCustomViewUpdate(workbookImpl, messagingOptions, info, doUpdateList) {
-            if (doUpdateList) {
-                workbookImpl.set_$updatedCustomViews(new tab._Collection());
-            }
+        $tab__CustomViewImpl._processCustomViewUpdate = function CustomViewImpl$ProcessCustomViewUpdate(workbookImpl, messagingOptions, customViewsInfo, shouldUpdateList) {
             workbookImpl.set_$currentCustomView(null);
-            var currentViewName = null;
-            if (ss.isValue(info.currentView)) {
-                currentViewName = info.currentView.name;
-            }
-            var defaultId = info.defaultCustomViewId;
-            if (doUpdateList && ss.isValue(info.newView)) {
-                var newViewImpl = $tab__CustomViewImpl._createNew(workbookImpl, messagingOptions, info.newView, defaultId);
-                workbookImpl.get_$updatedCustomViews()._add(newViewImpl.get_$name(), newViewImpl.get_$customView());
-            }
             workbookImpl.set_$removedCustomViews(workbookImpl.get_$customViews());
             workbookImpl.set_$customViews(new tab._Collection());
-            if (ss.isValue(info.customViews)) {
-                var list = info.customViews;
-                if (list.length > 0) {
-                    for (var i = 0; i < list.length; i++) {
-                        var customViewImpl = $tab__CustomViewImpl._createNew(workbookImpl, messagingOptions, list[i], defaultId);
-                        workbookImpl.get_$customViews()._add(customViewImpl.get_$name(), customViewImpl.get_$customView());
-                        if (workbookImpl.get_$removedCustomViews()._has(customViewImpl.get_$name())) {
-                            workbookImpl.get_$removedCustomViews()._remove(customViewImpl.get_$name());
-                        } else if (doUpdateList) {
-                            if (!workbookImpl.get_$updatedCustomViews()._has(customViewImpl.get_$name())) {
-                                workbookImpl.get_$updatedCustomViews()._add(customViewImpl.get_$name(), customViewImpl.get_$customView());
-                            }
-                        }
-                        if (ss.isValue(currentViewName) && ss.referenceEquals(customViewImpl.get_$name(), currentViewName)) {
-                            workbookImpl.set_$currentCustomView(customViewImpl.get_$customView());
-                        }
-                    }
+            if (shouldUpdateList) {
+                workbookImpl.set_$updatedCustomViews(new tab._Collection());
+                if (ss.isValue(customViewsInfo.newView)) {
+                    $tab__CustomViewImpl.$processOneCustomViewUpdate(workbookImpl, messagingOptions, customViewsInfo, customViewsInfo.newView, shouldUpdateList);
                 }
+            }
+            if (ss.isValue(customViewsInfo.customViews)) {
+                for (var $t1 = 0; $t1 < customViewsInfo.customViews.length; $t1++) {
+                    var customView = customViewsInfo.customViews[$t1];
+                    $tab__CustomViewImpl.$processOneCustomViewUpdate(workbookImpl, messagingOptions, customViewsInfo, customView, shouldUpdateList);
+                }
+            }
+        };
+        $tab__CustomViewImpl.$processOneCustomViewUpdate = function CustomViewImpl$ProcessOneCustomViewUpdate(workbookImpl, messagingOptions, customViewsInfo, customView, shouldUpdateList) {
+            var currentViewName = null;
+            var currentOwnerName = null;
+            if (ss.isValue(customViewsInfo.currentView)) {
+                currentViewName = customViewsInfo.currentView.name;
+                currentOwnerName = customViewsInfo.currentView.owner.friendlyName;
+            }
+            var defaultCustomViewId = customViewsInfo.defaultCustomViewId;
+            var customViewImpl = $tab__CustomViewImpl._createNew(workbookImpl, messagingOptions, customView, defaultCustomViewId);
+            var customViewKey = customViewImpl.get_$name();
+            if (workbookImpl.get_$customViews()._has(customViewKey)) {
+                customViewKey += '/' + customView.owner;
+            }
+            workbookImpl.get_$customViews()._add(customViewKey, customViewImpl.get_$customView());
+            if (workbookImpl.get_$removedCustomViews()._has(customViewKey)) {
+                workbookImpl.get_$removedCustomViews()._remove(customViewKey);
+            } else if (shouldUpdateList && !workbookImpl.get_$updatedCustomViews()._has(customViewKey)) {
+                workbookImpl.get_$updatedCustomViews()._add(customViewKey, customViewImpl.get_$customView());
+            }
+            if (ss.isValue(currentViewName) && ss.referenceEquals(customViewImpl.get_$name(), currentViewName) && ss.referenceEquals(customViewImpl.get_$ownerName(), currentOwnerName)) {
+                workbookImpl.set_$currentCustomView(customViewImpl.get_$customView());
             }
         };
         $tab__CustomViewImpl.$createCustomViewCommandReturnHandler = function CustomViewImpl$CreateCustomViewCommandReturnHandler(commandName, deferred, successCallback) {
@@ -5102,6 +5538,9 @@
         };
         $tab__StoryPointImpl.__typeName = 'tab._StoryPointImpl';
         $tab__StoryPointImpl.createContainedSheet = function StoryPointImpl$CreateContainedSheet(containedSheetInfo, workbookImpl, messagingOptions, findSheetFunc) {
+            if (ss.isNullOrUndefined(containedSheetInfo) || ss.isNullOrUndefined(containedSheetInfo.name)) {
+                return null;
+            }
             var containedSheetType = tab.ApiEnumConverter.convertSheetType(containedSheetInfo.sheetType);
             var index = -1;
             var size = tab.SheetSizeFactory.createAutomatic();
@@ -5461,7 +5900,10 @@
             this.$customViewLoadCallbacks = {};
             this.$crossDomainMessager = null;
             var legacyHandler = ss.mkdel(this, function(command, handler) {
-                this.$handleLegacyNotifications(command, ss.cast(handler, $tab_IJsApiMessageHandler));
+                var jsApiMessageHandler = ss.safeCast(handler, $tab_IJsApiMessageHandler);
+                if (ss.isValue(jsApiMessageHandler)) {
+                    this.$handleLegacyNotifications(command, jsApiMessageHandler);
+                }
             });
             this.$crossDomainMessager = new tab.CrossDomainMessager(legacyHandler);
         };
@@ -6044,9 +6486,6 @@
                     throw tab._TableauException.create('staleDataReference', 'Stale data');
                 }
                 return $tab__CustomViewImpl._showCustomViewAsync(this.$workbookImpl, this.$messagingOptions, this.$presModel);
-            },
-            $isDifferent: function CustomViewImpl$IsDifferent(other) {
-                return !ss.referenceEquals(this.$ownerName, other.$ownerName) || !ss.referenceEquals(this.$url, other.$url) || this.$isPublic !== other.$isPublic || this.$isDefault !== other.$isDefault;
             }
         });
         ss.initClass($tab__SheetImpl, $asm, {
@@ -6128,7 +6567,7 @@
                 param['api.minHeight'] = dict['api.minHeight'];
                 param['api.maxWidth'] = dict['api.maxWidth'];
                 param['api.maxHeight'] = dict['api.maxHeight'];
-                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.SetSheetSizeCommand', 1, ss.mkdel(this, function(result) {
+                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.SetSheetSizeCommand', 0, ss.mkdel(this, function(result) {
                     this.get_workbookImpl()._update(ss.mkdel(this, function() {
                         var updatedSize = this.get_workbookImpl().get_publishedSheets()._get(this.get_name()).getSize();
                         deferred.resolve(updatedSize);
@@ -6362,11 +6801,10 @@
                 if (index < 0 || index >= this.$storyPointsInfo.length) {
                     throw tab._TableauException.createIndexOutOfRange(index);
                 }
-                var previouslyActiveStoryPointImpl = this.get_activeStoryPointImpl();
                 var commandParameters = {};
                 commandParameters['api.storyPointIndex'] = index;
                 var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.ActivateStoryPoint', 0, ss.mkdel(this, function(result) {
-                    this.$updateActiveState(previouslyActiveStoryPointImpl, result);
+                    this.$updateActiveState(result);
                     deferred.resolve(this.$activeStoryPointImpl.get_storyPoint());
                 }), function(remoteError, errorMessage) {
                     deferred.reject(tab._TableauException.createServerError(errorMessage));
@@ -6396,10 +6834,9 @@
                     throw tab._TableauException.createInternalError("commandName '" + commandName + "' is invalid.");
                 }
                 var deferred = new tab._Deferred();
-                var previouslyActiveStoryPointImpl = this.get_activeStoryPointImpl();
                 var commandParameters = {};
                 var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))(commandName, 0, ss.mkdel(this, function(result) {
-                    this.$updateActiveState(previouslyActiveStoryPointImpl, result);
+                    this.$updateActiveState(result);
                     deferred.resolve(this.$activeStoryPointImpl.get_storyPoint());
                 }), function(remoteError, errorMessage) {
                     deferred.reject(tab._TableauException.createServerError(errorMessage));
@@ -6418,7 +6855,8 @@
                     this.$activeStoryPointImpl.set_isUpdated(newStoryPointPm.isUpdated);
                 }
             },
-            $updateActiveState: function StoryImpl$UpdateActiveState(previouslyActiveStoryPointImpl, newActiveStoryPointPm) {
+            $updateActiveState: function StoryImpl$UpdateActiveState(newActiveStoryPointPm) {
+                var previouslyActiveStoryPointImpl = this.$activeStoryPointImpl;
                 var newActiveIndex = newActiveStoryPointPm.index;
                 if (previouslyActiveStoryPointImpl.get_index() === newActiveIndex) {
                     return;
@@ -6553,7 +6991,7 @@
                 try {
                     while ($t1.moveNext()) {
                         var entry = $t1.current();
-                        if (entry.key !== 'embed' && entry.key !== 'height' && entry.key !== 'width' && entry.key !== 'device' && entry.key !== 'autoSize' && entry.key !== 'hideTabs' && entry.key !== 'hideToolbar' && entry.key !== 'onFirstInteractive' && entry.key !== 'onFirstVizSizeKnown' && entry.key !== 'toolbarPosition' && entry.key !== 'instanceIdToClone' && entry.key !== 'display_static_image') {
+                        if (entry.key !== 'embed' && entry.key !== 'height' && entry.key !== 'width' && entry.key !== 'device' && entry.key !== 'autoSize' && entry.key !== 'hideTabs' && entry.key !== 'hideToolbar' && entry.key !== 'onFirstInteractive' && entry.key !== 'onFirstVizSizeKnown' && entry.key !== 'toolbarPosition' && entry.key !== 'instanceIdToClone' && entry.key !== 'navType' && entry.key !== 'display_static_image') {
                             url.push('&');
                             url.push(encodeURIComponent(entry.key));
                             url.push('=');
@@ -6564,8 +7002,16 @@
                     $t1.dispose();
                 }
                 url.push('&:apiID=' + this.hostId);
+                url.push('#');
                 if (ss.isValue(this.$createOptions.instanceIdToClone)) {
-                    url.push('#' + this.$createOptions.instanceIdToClone);
+                    url.push(this.$createOptions.instanceIdToClone + '&');
+                }
+                if (ss.isValue(this.$createOptions.navType) && this.$createOptions.navType.length > 0) {
+                    url.push('navType=' + this.$createOptions.navType.toString() + '&');
+                    url.push('navSrc=' + 'Opt'.toString());
+                } else {
+                    url.push('navType=' + window.performance.navigation.type.toString() + '&');
+                    url.push('navSrc=' + 'Parse'.toString());
                 }
                 return url.join('');
             }
@@ -7137,7 +7583,7 @@
                 var deferred = new tab._Deferred();
                 var commandParameters = {};
                 this.$addVisualIdToCommand(commandParameters);
-                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.ClearSelectedMarksCommand', 1, function(result) {
+                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.ClearSelectedMarksCommand', 0, function(result) {
                     deferred.resolve();
                 }, function(remoteError, message) {
                     deferred.reject(tab._TableauException.createServerError(message));
@@ -7323,7 +7769,7 @@
                     throw tab._TableauException.createInvalidParameter('fieldNameOrFieldValuesMap');
                 }
                 var deferred = new tab._Deferred();
-                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.SelectMarksCommand', 1, function(result) {
+                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.SelectMarksCommand', 0, function(result) {
                     var error = $tab__WorksheetImpl.$createSelectionCommandError(result);
                     if (ss.isNullOrUndefined(error)) {
                         deferred.resolve();
@@ -7359,7 +7805,7 @@
                 var deferred = new tab._Deferred();
                 var commandParameters = {};
                 this.$addVisualIdToCommand(commandParameters);
-                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.ClearHighlightedMarksCommand', 1, function(result) {
+                var returnHandler = new(ss.makeGenericType(tab.CommandReturnHandler$1, [Object]))('api.ClearHighlightedMarksCommand', 0, function(result) {
                     deferred.resolve();
                 }, function(remoteError, message) {
                     deferred.reject(tab._TableauException.createServerError(message));
@@ -8081,7 +8527,9 @@
             $setFrameSizeAndUpdate: function VizImpl$SetFrameSizeAndUpdate(width, height) {
                 this.$raiseVizResizeEvent(tab.Size.$ctor(-1, -1));
                 this.$setFrameSize(width, height);
-                this.$workbookImpl._updateActiveSheetAsync();
+                if (ss.isValue(this.$workbookImpl)) {
+                    this.$workbookImpl._updateActiveSheetAsync();
+                }
             },
             $setAreAutomaticUpdatesPaused: function VizImpl$SetAreAutomaticUpdatesPaused(value) {
                 this.$areAutomaticUpdatesPaused = value;
@@ -8449,14 +8897,17 @@
                 if (!this.$onFirstInteractiveAlreadyCalled) {
                     var callback = this.$onFirstInteractiveCallback;
                     window.setTimeout(ss.mkdel(this, function() {
+                        if (this.$onFirstInteractiveAlreadyCalled) {
+                            return;
+                        }
                         if (!ss.staticEquals(callback, null)) {
                             callback(new $tab_TableauEvent('firstinteractive', this.$viz));
                         }
                         if (!ss.staticEquals(actionAfterFirstInteractive, null)) {
                             actionAfterFirstInteractive();
                         }
+                        this.$onFirstInteractiveAlreadyCalled = true;
                     }), 0);
-                    this.$onFirstInteractiveAlreadyCalled = true;
                 }
                 this.$raiseStateReadyForQuery();
             },
@@ -9226,7 +9677,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 2, 1, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 2, 2, 'null');
         })();
     })();
 

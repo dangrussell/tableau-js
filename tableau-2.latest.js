@@ -1,4 +1,4 @@
-/*! tableau-2.0.1 */
+/*! tableau-2.0.2 */
 (function() {
 
 
@@ -1889,6 +1889,14 @@
         $tab_WindowHelper.get_windowSelf = function WindowHelper$get_WindowSelf() {
             return window.self;
         };
+        $tab_WindowHelper.get_selection = function WindowHelper$get_Selection() {
+            if (typeof(window['getSelection']) === 'function') {
+                return window.getSelection();
+            } else if (typeof(document['getSelection']) === 'function') {
+                return document.getSelection();
+            }
+            return null;
+        };
         $tab_WindowHelper.close = function WindowHelper$Close(window) {
             window.close();
         };
@@ -1924,6 +1932,22 @@
         $tab_WindowHelper.setTimeout = function WindowHelper$SetTimeout(callback, milliseconds) {
             window.setTimeout(callback, milliseconds);
         };
+        $tab_WindowHelper.addListener = function WindowHelper$AddListener(window, eventName, messageListener) {
+            var addEventListener = ss.mkdel(window, window.addEventListener);
+            if (ss.isValue(addEventListener)) {
+                addEventListener(eventName, messageListener, false);
+            } else {
+                window.attachEvent('on' + eventName, messageListener);
+            }
+        };
+        $tab_WindowHelper.removeListener = function WindowHelper$RemoveListener(window, eventName, messageListener) {
+            var removeEventListener = ss.mkdel(window, window.removeEventListener);
+            if (ss.isValue(removeEventListener)) {
+                removeEventListener(eventName, messageListener, false);
+            } else {
+                window.detachEvent('on' + eventName, messageListener);
+            }
+        };
         $tab_WindowHelper.$setDefaultRequestAnimationFrameImpl = function WindowHelper$SetDefaultRequestAnimationFrameImpl() {
             var lastTime = 0;
             $tab_WindowHelper.$requestAnimationFrameFunc = function(callback) {
@@ -1933,6 +1957,16 @@
                 var id = window.setTimeout(callback, timeToCall);
                 return id;
             };
+        };
+        $tab_WindowHelper.clearSelection = function WindowHelper$ClearSelection() {
+            var selection = $tab_WindowHelper.get_selection();
+            if (ss.isValue(selection)) {
+                if (typeof(selection['removeAllRanges']) === 'function') {
+                    selection.removeAllRanges();
+                } else if (typeof(selection['empty']) === 'function') {
+                    selection['empty']();
+                }
+            }
         };
         global.tab.WindowHelper = $tab_WindowHelper;
         ss.initClass($tab_EscapingUtil, $asm, {});
@@ -1969,7 +2003,7 @@
                 return $tab_WindowHelper.$screenTopFunc(this.$window);
             }
         });
-        (function WindowHelper() {
+        (function() {
             $tab_WindowHelper.$innerWidthFunc = null;
             $tab_WindowHelper.$innerHeightFunc = null;
             $tab_WindowHelper.$clientWidthFunc = null;
@@ -3269,8 +3303,8 @@
             var paddingTop = parseFloat(style.paddingTop);
             var paddingRight = parseFloat(style.paddingRight);
             var paddingBottom = parseFloat(style.paddingBottom);
-            var width = element.clientWidth - ss.Int32.trunc(Math.round(paddingLeft + paddingRight));
-            var height = element.clientHeight - ss.Int32.trunc(Math.round(paddingTop + paddingBottom));
+            var width = element.clientWidth - Math.round(paddingLeft + paddingRight);
+            var height = element.clientHeight - Math.round(paddingTop + paddingBottom);
             return $tab_Size.$ctor(width, height);
         };
         $tab__Utility.$getComputedStyle = function Utility$GetComputedStyle(element) {
@@ -4977,6 +5011,8 @@
                     $tab__VizManagerImpl.$sendVisibleRects();
                 } else if (ss.referenceEquals(messageName, 'tableau.completed'.toString()) || ss.referenceEquals(messageName, 'completed'.toString())) {
                     handler.handleVizLoad();
+                } else if (messageName === 'tableau.listening') {
+                    handler.handleVizListening();
                 }
             }
         }, null, [$tab_ICrossDomainMessageRouter]);
@@ -4995,7 +5031,7 @@
         }, $tab_EventContext);
         ss.initClass($tab_$DashboardZoneInfo, $asm, {});
         ss.initClass($tab_$DeferredUtil, $asm, {});
-        ss.initInterface($tab_ICrossDomainMessageHandler, $asm, { add_customViewsListLoad: null, remove_customViewsListLoad: null, add_stateReadyForQuery: null, remove_stateReadyForQuery: null, get_iframe: null, get_handlerId: null, set_handlerId: null, handleVizLoad: null, handleEventNotification: null });
+        ss.initInterface($tab_ICrossDomainMessageHandler, $asm, { add_customViewsListLoad: null, remove_customViewsListLoad: null, add_stateReadyForQuery: null, remove_stateReadyForQuery: null, get_iframe: null, get_handlerId: null, set_handlerId: null, handleVizLoad: null, handleVizListening: null, handleEventNotification: null });
         ss.initClass($tab_$DoNothingCrossDomainHandler, $asm, {
             add_customViewsListLoad: function DoNothingCrossDomainHandler$add_CustomViewsListLoad(value) {
                 this.$1$CustomViewsListLoadField = ss.delegateCombine(this.$1$CustomViewsListLoadField, value);
@@ -5022,6 +5058,7 @@
                 return '*';
             },
             handleVizLoad: function DoNothingCrossDomainHandler$HandleVizLoad() {},
+            handleVizListening: function DoNothingCrossDomainHandler$HandleVizListening() {},
             handleEventNotification: function DoNothingCrossDomainHandler$HandleEventNotification(eventName, parameters) {},
             $silenceTheCompilerWarning: function DoNothingCrossDomainHandler$SilenceTheCompilerWarning() {
                 this.$1$CustomViewsListLoadField(null);
@@ -5337,6 +5374,9 @@
             },
             get_isDashboard: function SheetImpl$get_IsDashboard() {
                 return this.$sheetType === 'dashboard';
+            },
+            get_isStory: function SheetImpl$get_IsStory() {
+                return this.$sheetType === 'story';
             },
             get_sheetType: function SheetImpl$get_SheetType() {
                 return this.$sheetType;
@@ -6293,9 +6333,7 @@
                 if (ss.isValue(this.get_parentStoryPointImpl())) {
                     var visualId = {};
                     visualId.worksheet = this.get_name();
-                    if (ss.isValue(this.get_parentDashboardImpl())) {
-                        visualId.dashboard = this.get_parentDashboardImpl().get_name();
-                    }
+                    visualId.dashboard = (ss.isValue(this.get_parentDashboardImpl()) ? this.$parentDashboardImpl.get_name() : this.get_name());
                     visualId.flipboardZoneId = this.get_parentStoryPointImpl().get_containedSheetImpl().get_zoneId();
                     visualId.storyboard = this.get_parentStoryPointImpl().get_parentStoryImpl().get_name();
                     visualId.storyPointId = this.get_parentStoryPointImpl().get_storyPointId();
@@ -6986,8 +7024,10 @@
                 this._sendCommand(String).call(this, null, returnHandler);
                 return deferred.get_promise();
             },
-            handleVizLoad: function VizImpl$HandleVizLoad() {
+            handleVizListening: function VizImpl$HandleVizListening() {
                 this.$enableVisibleRectCommunication();
+            },
+            handleVizLoad: function VizImpl$HandleVizLoad() {
                 if (ss.isNullOrUndefined(this.$workbookImpl)) {
                     this.$workbookImpl = new $tab__WorkbookImpl(this, this.$messagingOptions, ss.mkdel(this, function() {
                         this.$onWorkbookInteractive(null);
@@ -7371,7 +7411,11 @@
                 this.$iframe.src = this.$parameters.get_url();
             },
             $sendVisibleRect: function VizImpl$SendVisibleRect() {
-                if (!$tab__Utility.hasWindowPostMessage() || ss.isNullOrUndefined(this.$iframe) || !ss.isValue(this.$iframe.contentWindow)) {
+                try {
+                    if (!$tab__Utility.hasWindowPostMessage() || ss.isNullOrUndefined(this.$iframe) || !ss.isValue(this.$iframe.contentWindow)) {
+                        return;
+                    }
+                } catch ($t1) {
                     return;
                 }
                 var visibleRect = $tab__Utility.visibleContentRectInDocumentCoordinates(this.get_iframe());
@@ -7506,21 +7550,23 @@
                 this.$raiseStateReadyForQuery();
             },
             $handleMarksSelectionChangedEvent: function VizImpl$HandleMarksSelectionChangedEvent(notification) {
-                if (!ss.staticEquals(this.$1$MarksSelectionField, null)) {
-                    if (ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
-                        var worksheetImpl = null;
-                        var activeSheetImpl = this.$workbookImpl.get_activeSheetImpl();
-                        if (ss.referenceEquals(activeSheetImpl.get_name(), notification.get_worksheetName())) {
-                            worksheetImpl = ss.cast(activeSheetImpl, $tab__WorksheetImpl);
-                        } else if (activeSheetImpl.get_isDashboard()) {
-                            var db = ss.cast(activeSheetImpl, $tab__DashboardImpl);
-                            worksheetImpl = db.get_worksheets()._get(notification.get_worksheetName())._impl;
-                        }
-                        if (ss.isValue(worksheetImpl)) {
-                            worksheetImpl.set_selectedMarks(null);
-                            this.$1$MarksSelectionField(new $tab_MarksEvent('marksselection', this.$viz, worksheetImpl));
-                        }
-                    }
+                if (ss.staticEquals(this.$1$MarksSelectionField, null) || !ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
+                    return;
+                }
+                var worksheetImpl = null;
+                var activeSheetImpl = this.$workbookImpl.get_activeSheetImpl();
+                if (activeSheetImpl.get_isStory()) {
+                    activeSheetImpl = ss.cast(activeSheetImpl, $tab__StoryImpl).get_activeStoryPointImpl().get_containedSheetImpl();
+                }
+                if (ss.referenceEquals(activeSheetImpl.get_name(), notification.get_worksheetName())) {
+                    worksheetImpl = ss.cast(activeSheetImpl, $tab__WorksheetImpl);
+                } else if (activeSheetImpl.get_isDashboard()) {
+                    var dashboardImpl = ss.cast(activeSheetImpl, $tab__DashboardImpl);
+                    worksheetImpl = dashboardImpl.get_worksheets()._get(notification.get_worksheetName())._impl;
+                }
+                if (ss.isValue(worksheetImpl)) {
+                    worksheetImpl.set_selectedMarks(null);
+                    this.$1$MarksSelectionField(new $tab_MarksEvent('marksselection', this.$viz, worksheetImpl));
                 }
             },
             $handleFilterChangedEvent: function VizImpl$HandleFilterChangedEvent(notification) {
@@ -8307,14 +8353,14 @@
                 return this._impl.$getSelectedMarksAsync();
             }
         }, $tableauSoftware_Sheet);
-        (function ApiCommand() {
+        (function() {
             $tab__ApiCommand.crossDomainEventNotificationId = 'xdomainSourceId';
             $tab__ApiCommand.lastRequestMessage = null;
             $tab__ApiCommand.lastResponseMessage = null;
             $tab__ApiCommand.lastClientInfoResponseMessage = null;
             $tab__ApiCommand.$nextCommandId = 0;
         })();
-        (function jQueryInterface() {
+        (function() {
             $tab__jQueryShim.$arrayType = 'array';
             $tab__jQueryShim.$booleanType = 'boolean';
             $tab__jQueryShim.$dateType = 'date';
@@ -8333,13 +8379,13 @@
             $tab__jQueryShim.$rvalidtokens = new RegExp('"[^"\\\\\\n\\r]*"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?', 'g');
             $tab__jQueryShim.$rvalidbraces = new RegExp('(?:^|:|,)(?:\\s*\\[)+', 'g');
         })();
-        (function JsonUtil() {
+        (function() {
             $tab_JsonUtil.$defaultIndentStr = '\t';
         })();
-        (function VizManagerImpl() {
+        (function() {
             $tab__VizManagerImpl.$vizs = [];
         })();
-        (function PublicEnums() {
+        (function() {
             var ns = global.tableauSoftware;
             ns.DashboardObjectType = { BLANK: 'blank', WORKSHEET: 'worksheet', QUICK_FILTER: 'quickFilter', PARAMETER_CONTROL: 'parameterControl', PAGE_FILTER: 'pageFilter', LEGEND: 'legend', TITLE: 'title', TEXT: 'text', IMAGE: 'image', WEB_PAGE: 'webPage' };
             ns.DateRangeType = { LAST: 'last', LASTN: 'lastn', NEXT: 'next', NEXTN: 'nextn', CURR: 'curr', TODATE: 'todate' };
@@ -8358,18 +8404,18 @@
             ns.TableauEventName = { CUSTOM_VIEW_LOAD: 'customviewload', CUSTOM_VIEW_REMOVE: 'customviewremove', CUSTOM_VIEW_SAVE: 'customviewsave', CUSTOM_VIEW_SET_DEFAULT: 'customviewsetdefault', FILTER_CHANGE: 'filterchange', FIRST_INTERACTIVE: 'firstinteractive', FIRST_VIZ_SIZE_KNOWN: 'firstvizsizeknown', MARKS_SELECTION: 'marksselection', PARAMETER_VALUE_CHANGE: 'parametervaluechange', STORY_POINT_SWITCH: 'storypointswitch', TAB_SWITCH: 'tabswitch', VIZ_RESIZE: 'vizresize' };
             ns.ToolbarPosition = { TOP: 'top', BOTTOM: 'bottom' };
         })();
-        (function ApiObjectRegistry() {
+        (function() {
             $tab__ApiObjectRegistry.$creationRegistry = null;
             $tab__ApiObjectRegistry.$singletonInstanceRegistry = null;
         })();
-        (function SheetImpl() {
+        (function() {
             $tab__SheetImpl.noZoneId = 4294967295;
         })();
-        (function WorksheetImpl() {
+        (function() {
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
-        (function Version() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 0, 1, 'null');
+        (function() {
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 0, 2, 'null');
         })();
     })();
 

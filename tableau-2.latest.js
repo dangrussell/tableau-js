@@ -1,4 +1,4 @@
-/*! tableau-2.1.0 */
+/*! tableau-2.1.1 */
 (function() {
 
 
@@ -1930,7 +1930,7 @@
             }
         };
         $tab_WindowHelper.setTimeout = function WindowHelper$SetTimeout(callback, milliseconds) {
-            window.setTimeout(callback, milliseconds);
+            return window.setTimeout(callback, milliseconds);
         };
         $tab_WindowHelper.addListener = function WindowHelper$AddListener(windowParam, eventName, messageListener) {
             if ('addEventListener' in windowParam) {
@@ -2286,7 +2286,7 @@
             }
         };
         $tab_$MarkImpl.__typeName = 'tab.$MarkImpl';
-        $tab_$MarkImpl.$processSelectedMarks = function MarkImpl$ProcessSelectedMarks(marksPresModel) {
+        $tab_$MarkImpl.$processActiveMarks = function MarkImpl$ProcessActiveMarks(marksPresModel) {
             var marks = new tab._Collection();
             if (ss.isNullOrUndefined(marksPresModel) || $tab__Utility.isNullOrEmpty(marksPresModel.marks)) {
                 return marks;
@@ -3375,6 +3375,13 @@
             }
             return element.style;
         };
+        $tab__Utility.roundVizSizeInPixels = function Utility$RoundVizSizeInPixels(size) {
+            if (ss.isNullOrUndefined(size) || !(size.indexOf('px') !== -1)) {
+                return size;
+            }
+            var sizeValue = parseFloat(size.split('px')[0]);
+            return Math.round(sizeValue) + 'px';
+        };
         global.tab._Utility = $tab__Utility;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.VizManagerImpl
@@ -3445,8 +3452,8 @@
                 if ($tab__Utility.isNumber(options.width)) {
                     options.width = options.width.toString() + 'px';
                 }
-                this.height = (ss.isValue(options.height) ? options.height.toString() : null);
-                this.width = (ss.isValue(options.width) ? options.width.toString() : null);
+                this.height = (ss.isValue(options.height) ? $tab__Utility.roundVizSizeInPixels(options.height.toString()) : null);
+                this.width = (ss.isValue(options.width) ? $tab__Utility.roundVizSizeInPixels(options.width.toString()) : null);
             } else {
                 this.fixedSize = false;
             }
@@ -3560,6 +3567,7 @@
             this.$parentDashboardImpl = null;
             this.$filters = new tab._Collection();
             this.$selectedMarks = new tab._Collection();
+            this.highlightedMarks = null;
             $tab__SheetImpl.call(this, sheetInfoImpl, workbookImpl, messagingOptions);
             this.$parentDashboardImpl = parentDashboardImpl;
         };
@@ -4659,12 +4667,30 @@
             }
             return null;
         };
-        $tableauSoftware_Filter.$processFiltersList = function Filter$ProcessFiltersList(worksheetImpl, filtersListDict) {
-            var filters = new tab._Collection();
+        $tableauSoftware_Filter.processFiltersList = function Filter$ProcessFiltersList(worksheetImpl, filtersListDict) {
+            var filterCaptions = new tab._Collection();
             for (var $t1 = 0; $t1 < filtersListDict.filters.length; $t1++) {
                 var filterPm = filtersListDict.filters[$t1];
-                var filter = $tableauSoftware_Filter.$createFilter(worksheetImpl, filterPm);
-                filters._add(filterPm.caption, filter);
+                if (!filterCaptions._has(filterPm.caption)) {
+                    filterCaptions._add(filterPm.caption, filterPm.caption);
+                }
+            }
+            var filters = new tab._Collection();
+            for (var $t2 = 0; $t2 < filtersListDict.filters.length; $t2++) {
+                var filterPm1 = filtersListDict.filters[$t2];
+                var filter = $tableauSoftware_Filter.$createFilter(worksheetImpl, filterPm1);
+                if (!filters._has(filterPm1.caption)) {
+                    filters._add(filterPm1.caption, filter);
+                    continue;
+                }
+                var filterCollectionKey = filterPm1.caption.toString() + '_' + filterPm1.filterType.toString();
+                var filterCollectionKeyNumbered = filterCollectionKey;
+                var numberLabel = 1;
+                while (filterCaptions._has(filterCollectionKeyNumbered)) {
+                    filterCollectionKeyNumbered = filterCollectionKey + '_' + numberLabel;
+                    numberLabel++;
+                }
+                filters._add(filterCollectionKeyNumbered, filter);
             }
             return filters;
         };
@@ -4931,7 +4957,7 @@
                     if (ss.referenceEquals(command.get_commandId(), $tab__ApiCommand.crossDomainEventNotificationId)) {
                         handler.handleEventNotification(command.get_name(), command.get_parameters());
                         if (command.get_name() === 'api.FirstVizSizeKnownEvent') {
-                            messageEvent.source.postMessage('tableau.bootstrap'.toString(), '*');
+                            messageEvent.source.postMessage('tableau.bootstrap', '*');
                         }
                     } else {
                         this.$handleCrossDomainResponse(command);
@@ -4988,9 +5014,9 @@
                 }
             },
             $handleLegacyNotifications: function CrossDomainMessageRouter$HandleLegacyNotifications(messageName, handler) {
-                if (ss.referenceEquals(messageName, 'layoutInfoReq'.toString())) {
+                if (messageName === 'layoutInfoReq') {
                     $tab__VizManagerImpl.$sendVisibleRects();
-                } else if (ss.referenceEquals(messageName, 'tableau.completed'.toString()) || ss.referenceEquals(messageName, 'completed'.toString())) {
+                } else if (messageName === 'tableau.completed' || messageName === 'completed') {
                     handler.handleVizLoad();
                 } else if (messageName === 'tableau.listening') {
                     handler.handleVizListening();
@@ -5880,6 +5906,12 @@
                     url.push(this.userSuppliedParameters);
                     url.push('&');
                 }
+                var addClientDimensionForDsd = !this.fixedSize && !(this.userSuppliedParameters.indexOf(':size=') !== -1) && this.parentElement.clientWidth * this.parentElement.clientHeight > 0;
+                if (addClientDimensionForDsd) {
+                    url.push(':size=');
+                    url.push(this.parentElement.clientWidth + ',' + this.parentElement.clientHeight);
+                    url.push('&');
+                }
                 url.push(':embed=y');
                 url.push('&:showVizHome=n');
                 url.push('&:jsdebug=y');
@@ -6409,7 +6441,7 @@
                 this.$addVisualIdToCommand(commandParameters);
                 commandParameters['api.ignoreDomain'] = options.ignoreDomain || false;
                 var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.GetFiltersListCommand', 0, ss.mkdel(this, function(result) {
-                    this.set__filters($tableauSoftware_Filter.$processFiltersList(this, result));
+                    this.set__filters($tableauSoftware_Filter.processFiltersList(this, result));
                     deferred.resolve(this.get__filters()._toApiCollection());
                 }), function(remoteError, message) {
                     deferred.reject($tab__TableauException.createServerError(message));
@@ -6606,8 +6638,7 @@
                 var deferred = new tab._Deferred();
                 var commandParameters = {};
                 this.$addVisualIdToCommand(commandParameters);
-                commandParameters['api.filterUpdateType'] = 'replace';
-                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.SelectMarksCommand', 1, function(result) {
+                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.ClearSelectedMarksCommand', 1, function(result) {
                     deferred.resolve();
                 }, function(remoteError, message) {
                     deferred.reject($tab__TableauException.createServerError(message));
@@ -6634,7 +6665,7 @@
                 var commandParameters = {};
                 this.$addVisualIdToCommand(commandParameters);
                 var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.FetchSelectedMarksCommand', 0, ss.mkdel(this, function(result) {
-                    this.$selectedMarks = $tab_$MarkImpl.$processSelectedMarks(result);
+                    this.$selectedMarks = $tab_$MarkImpl.$processActiveMarks(result);
                     deferred.resolve(this.$selectedMarks._toApiCollection());
                 }), function(remoteError, message) {
                     deferred.reject($tab__TableauException.createServerError(message));
@@ -6840,6 +6871,67 @@
                     var dt = $tab__DataTableImpl.processGetDataPresModel(dataResult);
                     deferred.resolve(dt);
                 }, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(message));
+                });
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
+            $clearHighlightedMarksAsync: function WorksheetImpl$ClearHighlightedMarksAsync() {
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                var commandParameters = {};
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.ClearHighlightedMarksCommand', 1, function(result) {
+                    deferred.resolve();
+                }, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(message));
+                });
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
+            $highlightMarksAsync: function WorksheetImpl$HighlightMarksAsync(fieldName, values) {
+                $tab__Param.verifyString(fieldName, 'fieldName');
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                var commandParameters = {};
+                commandParameters['api.fieldCaption'] = fieldName;
+                commandParameters['api.ObjectTextIDs'] = values;
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.HighlightMarksCommand', 0, function(result) {
+                    deferred.resolve();
+                }, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(message));
+                });
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
+            $highlightMarksByPatternMatchAsync: function WorksheetImpl$HighlightMarksByPatternMatchAsync(fieldName, patternMatch) {
+                $tab__Param.verifyString(fieldName, 'fieldName');
+                $tab__Param.verifyString(patternMatch, 'patternMatch');
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                var commandParameters = {};
+                commandParameters['api.filterUpdateType'] = 'replace';
+                commandParameters['api.fieldCaption'] = fieldName;
+                commandParameters['api.Pattern'] = patternMatch;
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.HighlightMarksByPatternMatch', 0, function(result) {
+                    deferred.resolve();
+                }, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(message));
+                });
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
+            $getHighlightedMarksAsync: function WorksheetImpl$GetHighlightedMarksAsync() {
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                var commandParameters = {};
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.FetchHighlightedMarksCommand', 0, ss.mkdel(this, function(result) {
+                    this.highlightedMarks = $tab_$MarkImpl.$processActiveMarks(result);
+                    deferred.resolve(this.highlightedMarks._toApiCollection());
+                }), function(remoteError, message) {
                     deferred.reject($tab__TableauException.createServerError(message));
                 });
                 this.sendCommand(Object).call(this, commandParameters, returnHandler);
@@ -7641,23 +7733,32 @@
                 }
             },
             $handleFilterChangedEvent: function VizImpl$HandleFilterChangedEvent(notification) {
-                if (!ss.staticEquals(this.$1$FilterChangeField, null)) {
-                    if (ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
-                        var worksheetImpl = null;
-                        var activeSheetImpl = this.$workbookImpl.get_activeSheetImpl();
-                        if (ss.referenceEquals(activeSheetImpl.get_name(), notification.get_worksheetName())) {
-                            worksheetImpl = ss.cast(activeSheetImpl, $tab__WorksheetImpl);
-                        } else if (activeSheetImpl.get_isDashboard()) {
-                            var db = ss.cast(activeSheetImpl, $tab__DashboardImpl);
-                            worksheetImpl = db.get_worksheets()._get(notification.get_worksheetName())._impl;
-                        }
-                        if (ss.isValue(worksheetImpl)) {
-                            var results = ss.cast(JSON.parse(ss.cast(notification.get_data(), String)), Array);
-                            var filterFieldName = results[0];
-                            var filterCaption = results[1];
-                            this.$1$FilterChangeField(new $tab_FilterEvent('filterchange', this.$viz, worksheetImpl, filterFieldName, filterCaption));
-                        }
+                if (ss.staticEquals(this.$1$FilterChangeField, null) || !ss.referenceEquals(this.$workbookImpl.get_name(), notification.get_workbookName())) {
+                    return;
+                }
+                var worksheetImpl = null;
+                var activeSheetImpl = this.$workbookImpl.get_activeSheetImpl();
+                if (ss.referenceEquals(activeSheetImpl.get_name(), notification.get_worksheetName())) {
+                    worksheetImpl = ss.cast(activeSheetImpl, $tab__WorksheetImpl);
+                } else if (activeSheetImpl.get_isDashboard()) {
+                    var db = ss.cast(activeSheetImpl, $tab__DashboardImpl);
+                    worksheetImpl = db.get_worksheets()._get(notification.get_worksheetName())._impl;
+                } else if (activeSheetImpl.get_isStory()) {
+                    var story = ss.cast(activeSheetImpl, $tab__StoryImpl);
+                    var activeStoryPoint = story.get_activeStoryPointImpl();
+                    var containedSheet = activeStoryPoint.get_containedSheetImpl();
+                    if (containedSheet.get_isDashboard()) {
+                        var db1 = ss.cast(containedSheet, $tab__DashboardImpl);
+                        worksheetImpl = db1.get_worksheets()._get(notification.get_worksheetName())._impl;
+                    } else if (ss.referenceEquals(containedSheet.get_name(), notification.get_worksheetName())) {
+                        worksheetImpl = ss.cast(containedSheet, $tab__WorksheetImpl);
                     }
+                }
+                if (ss.isValue(worksheetImpl)) {
+                    var results = ss.cast(JSON.parse(ss.cast(notification.get_data(), String)), Array);
+                    var filterFieldName = results[0];
+                    var filterCaption = results[1];
+                    this.$1$FilterChangeField(new $tab_FilterEvent('filterchange', this.$viz, worksheetImpl, filterFieldName, filterCaption));
                 }
             },
             $handleParameterChangedEvent: function VizImpl$HandleParameterChangedEvent(notification) {
@@ -7812,6 +7913,7 @@
                 var ifr = ss.cast($t1, ss.isValue($t1) && (ss.isInstanceOfType($t1, Element) && $t1.tagName === 'IFRAME'));
                 ifr.frameBorder = '0';
                 ifr.setAttribute('allowTransparency', 'true');
+                ifr.setAttribute('allowFullScreen', 'true');
                 ifr.marginHeight = '0';
                 ifr.marginWidth = '0';
                 ifr.style.display = 'block';
@@ -8473,6 +8575,18 @@
             },
             getUnderlyingDataAsync: function Worksheet$GetUnderlyingDataAsync(options) {
                 return this._impl.$getUnderlyingDataAsync(options);
+            },
+            clearHighlightedMarksAsync: function Worksheet$ClearHighlightedMarksAsync() {
+                return this._impl.$clearHighlightedMarksAsync();
+            },
+            highlightMarksAsync: function Worksheet$HighlightMarksAsync(fieldName, values) {
+                return this._impl.$highlightMarksAsync(fieldName, values);
+            },
+            highlightMarksByPatternMatchAsync: function Worksheet$HighlightMarksByPatternMatchAsync(fieldName, patternMatch) {
+                return this._impl.$highlightMarksByPatternMatchAsync(fieldName, patternMatch);
+            },
+            getHighlightedMarksAsync: function Worksheet$GetHighlightedMarksAsync() {
+                return this._impl.$getHighlightedMarksAsync();
             }
         }, $tableauSoftware_Sheet);
         (function() {
@@ -8536,7 +8650,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 1, 0, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 1, 1, 'null');
         })();
     })();
 

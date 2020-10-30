@@ -1,4 +1,4 @@
-/*! tableau-2.1.2 */
+/*! tableau-2.2.0 */
 (function() {
 
 
@@ -1944,6 +1944,9 @@
         $tab_WindowHelper.setTimeout = function WindowHelper$SetTimeout(callback, milliseconds) {
             return window.setTimeout(callback, milliseconds);
         };
+        $tab_WindowHelper.setInterval = function WindowHelper$SetInterval(callback, milliseconds) {
+            return window.setInterval(callback, milliseconds);
+        };
         $tab_WindowHelper.addListener = function WindowHelper$AddListener(windowParam, eventName, messageListener) {
             if ('addEventListener' in windowParam) {
                 windowParam.addEventListener(eventName, messageListener, false);
@@ -2207,6 +2210,9 @@
         // Tableau.JavaScript.Vql.Api.DashboardZoneInfo
         var $tab_$DashboardZoneInfo = function() {};
         $tab_$DashboardZoneInfo.__typeName = 'tab.$DashboardZoneInfo';
+        $tab_$DashboardZoneInfo.isInstanceOfType = function() {
+            return true;
+        };
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.DeferredUtil
         var $tab_$DeferredUtil = function() {};
@@ -2977,6 +2983,9 @@
             $this.zoneId = zoneId;
             return $this;
         };
+        $tab__SheetInfoImpl.isInstanceOfType = function() {
+            return true;
+        };
         global.tab._SheetInfoImpl = $tab__SheetInfoImpl;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.StoryImpl
@@ -3069,6 +3078,9 @@
             $this.parentStoryImpl = parentStoryImpl;
             return $this;
         };
+        $tab__StoryPointInfoImpl.isInstanceOfType = function() {
+            return true;
+        };
         global.tab._StoryPointInfoImpl = $tab__StoryPointInfoImpl;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.TableauException
@@ -3143,6 +3155,9 @@
         $tab__TableauException.$createInvalidAggregationFieldName = function TableauException$CreateInvalidAggregationFieldName(fieldName) {
             return $tab__TableauException.create('invalidAggregationFieldName', "Invalid aggregation type for field '" + fieldName + "'");
         };
+        $tab__TableauException.$createInvalidToolbarButtonName = function TableauException$CreateInvalidToolbarButtonName(buttonName) {
+            return $tab__TableauException.create('invalidToolbarButtonName', "Invalid toolbar button name: '" + buttonName + "'");
+        };
         $tab__TableauException.createIndexOutOfRange = function TableauException$CreateIndexOutOfRange(index) {
             return $tab__TableauException.create('indexOutOfRange', "Index '" + index + "' is out of range.");
         };
@@ -3153,6 +3168,17 @@
             return $tab__TableauException.create('browserNotCapable', 'This browser is incapable of supporting the Tableau JavaScript API.');
         };
         global.tab._TableauException = $tab__TableauException;
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Api.ToolbarStateImpl
+        var $tab__ToolbarStateImpl = function(vizImpl, toolbarStatePresModel) {
+            this.$toolbarState = null;
+            this.$vizImpl = null;
+            this.$toolbarStatePresModel = null;
+            this.$vizImpl = vizImpl;
+            this.$toolbarStatePresModel = toolbarStatePresModel;
+        };
+        $tab__ToolbarStateImpl.__typeName = 'tab._ToolbarStateImpl';
+        global.tab._ToolbarStateImpl = $tab__ToolbarStateImpl;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.Utility
         var $tab__Utility = function() {};
@@ -3406,6 +3432,16 @@
             }
             var sizeValue = parseFloat(size.split('px')[0]);
             return Math.round(sizeValue) + 'px';
+        };
+        $tab__Utility.noResultPromiseHelper = function Utility$NoResultPromiseHelper(commandName, cmdParams, messagingOptions) {
+            var deferred = new tab._Deferred();
+            var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))(commandName, 1, function(result) {
+                deferred.resolve();
+            }, function(remoteError, message) {
+                deferred.reject($tab__TableauException.createServerError(message));
+            });
+            messagingOptions.sendCommand(Object).call(messagingOptions, cmdParams, returnHandler);
+            return deferred.get_promise();
         };
         global.tab._Utility = $tab__Utility;
         ////////////////////////////////////////////////////////////////////////////////
@@ -4227,6 +4263,11 @@
         $tab_ApiTableauEventName.__typeName = 'tab.ApiTableauEventName';
         global.tab.ApiTableauEventName = $tab_ApiTableauEventName;
         ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.ApiToolbarButtonName
+        var $tab_ApiToolbarButtonName = function() {};
+        $tab_ApiToolbarButtonName.__typeName = 'tab.ApiToolbarButtonName';
+        global.tab.ApiToolbarButtonName = $tab_ApiToolbarButtonName;
+        ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.ApiToolbarPosition
         var $tab_ApiToolbarPosition = function() {};
         $tab_ApiToolbarPosition.__typeName = 'tab.ApiToolbarPosition';
@@ -4309,6 +4350,9 @@
             }
             return $this;
         };
+        $tab_DataValue.isInstanceOfType = function() {
+            return true;
+        };
         global.tab.DataValue = $tab_DataValue;
         ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.EventContext
@@ -4389,6 +4433,9 @@
             $this.y = y;
             return $this;
         };
+        $tab_Point.isInstanceOfType = function() {
+            return true;
+        };
         global.tab.Point = $tab_Point;
         ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.SheetSize
@@ -4411,6 +4458,9 @@
                 delete $this['maxSize'];
             }
             return $this;
+        };
+        $tab_SheetSize.isInstanceOfType = function() {
+            return true;
         };
         global.tab.SheetSize = $tab_SheetSize;
         ////////////////////////////////////////////////////////////////////////////////
@@ -4464,6 +4514,9 @@
             $this.height = height;
             return $this;
         };
+        $tab_Size.isInstanceOfType = function() {
+            return true;
+        };
         global.tab.Size = $tab_Size;
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.StoryPointInfoImplUtil
@@ -4506,6 +4559,15 @@
         $tab_TabSwitchEvent.__typeName = 'tab.TabSwitchEvent';
         global.tab.TabSwitchEvent = $tab_TabSwitchEvent;
         ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.ToolbarStateEvent
+        var $tab_ToolbarStateEvent = function(eventName, viz, toolbarStateImpl) {
+            this.$toolbarStateImpl = null;
+            $tab_TableauEvent.call(this, eventName, viz);
+            this.$toolbarStateImpl = toolbarStateImpl;
+        };
+        $tab_ToolbarStateEvent.__typeName = 'tab.ToolbarStateEvent';
+        global.tab.ToolbarStateEvent = $tab_ToolbarStateEvent;
+        ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.VizImpl
         var $tab_VizImpl = function(messageRouter, viz, parentElement, url, options) {
             this.$workbookTabSwitchHandler = null;
@@ -4537,6 +4599,7 @@
             this.$1$CustomViewRemoveField = null;
             this.$1$CustomViewSetDefaultField = null;
             this.$1$TabSwitchField = null;
+            this.$1$ToolbarStateChangeField = null;
             this.$1$StoryPointSwitchField = null;
             this.$1$VizResizeField = null;
             if (!$tab__Utility.hasWindowPostMessage() || !$tab__Utility.hasJsonParse()) {
@@ -4575,6 +4638,9 @@
             $this.sheetSize = sheetSize;
             $this.chromeHeight = chromeHeight;
             return $this;
+        };
+        $tab_VizSize.isInstanceOfType = function() {
+            return true;
         };
         global.tab.VizSize = $tab_VizSize;
         ////////////////////////////////////////////////////////////////////////////////
@@ -4832,6 +4898,14 @@
         };
         $tableauSoftware_StoryPointInfo.__typeName = 'tableauSoftware.StoryPointInfo';
         global.tableauSoftware.StoryPointInfo = $tableauSoftware_StoryPointInfo;
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.ToolbarState
+        var $tableauSoftware_ToolbarState = function(toolbarStateImpl) {
+            this._impl = null;
+            this._impl = toolbarStateImpl;
+        };
+        $tableauSoftware_ToolbarState.__typeName = 'tableauSoftware.ToolbarState';
+        global.tableauSoftware.ToolbarState = $tableauSoftware_ToolbarState;
         ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.Version
         var $tableauSoftware_Version = function(major, minor, patch, metadata) {
@@ -5191,28 +5265,28 @@
         ss.initClass($tab_$PublicEnums, $asm, {});
         ss.initClass($tab__ApiBootstrap, $asm, {});
         ss.initClass($tab__ApiCommand, $asm, {
-            get_name: function() {
+            get_name: function ApiCommand$get_Name() {
                 return this.$1$NameField;
             },
-            set_name: function(value) {
+            set_name: function ApiCommand$set_Name(value) {
                 this.$1$NameField = value;
             },
-            get_hostId: function() {
+            get_hostId: function ApiCommand$get_HostId() {
                 return this.$1$HostIdField;
             },
-            set_hostId: function(value) {
+            set_hostId: function ApiCommand$set_HostId(value) {
                 this.$1$HostIdField = value;
             },
-            get_commandId: function() {
+            get_commandId: function ApiCommand$get_CommandId() {
                 return this.$1$CommandIdField;
             },
-            set_commandId: function(value) {
+            set_commandId: function ApiCommand$set_CommandId(value) {
                 this.$1$CommandIdField = value;
             },
-            get_parameters: function() {
+            get_parameters: function ApiCommand$get_Parameters() {
                 return this.$1$ParametersField;
             },
-            set_parameters: function(value) {
+            set_parameters: function ApiCommand$set_Parameters(value) {
                 this.$1$ParametersField = value;
             },
             get_isApiCommandName: function ApiCommand$get_IsApiCommandName() {
@@ -5951,6 +6025,33 @@
         });
         ss.initClass($tab__StoryPointInfoImpl, $asm, {}, Object);
         ss.initClass($tab__TableauException, $asm, {});
+        ss.initClass($tab__ToolbarStateImpl, $asm, {
+            get_toolbarState: function ToolbarStateImpl$get_ToolbarState() {
+                if (ss.isNullOrUndefined(this.$toolbarState)) {
+                    this.$toolbarState = new $tableauSoftware_ToolbarState(this);
+                }
+                return this.$toolbarState;
+            },
+            get_viz: function ToolbarStateImpl$get_Viz() {
+                return this.$vizImpl.get_$viz();
+            },
+            isButtonEnabled: function ToolbarStateImpl$IsButtonEnabled(toolbarButtonName) {
+                switch (toolbarButtonName) {
+                    case 'redo':
+                        {
+                            return this.$toolbarStatePresModel.canRedo;
+                        }
+                    case 'undo':
+                        {
+                            return this.$toolbarStatePresModel.canUndo;
+                        }
+                    default:
+                        {
+                            throw $tab__TableauException.$createInvalidToolbarButtonName(toolbarButtonName);
+                        }
+                }
+            }
+        });
         ss.initClass($tab__Utility, $asm, {});
         ss.initClass($tab__VizManagerImpl, $asm, {});
         ss.initClass($tab__VizParameters, $asm, {
@@ -7004,7 +7105,7 @@
         ss.initEnum($tab_ApiDateRangeType, $asm, { last: 'last', lastn: 'lastn', next: 'next', nextn: 'nextn', curr: 'curr', todate: 'todate' }, true);
         ss.initEnum($tab_ApiDeviceType, $asm, { default: 'default', desktop: 'desktop', tablet: 'tablet', phone: 'phone' }, true);
         ss.initClass($tab_ApiEnumConverter, $asm, {});
-        ss.initEnum($tab_ApiErrorCode, $asm, { internalError: 'internalError', serverError: 'serverError', invalidAggregationFieldName: 'invalidAggregationFieldName', invalidParameter: 'invalidParameter', invalidUrl: 'invalidUrl', staleDataReference: 'staleDataReference', vizAlreadyInManager: 'vizAlreadyInManager', noUrlOrParentElementNotFound: 'noUrlOrParentElementNotFound', invalidFilterFieldName: 'invalidFilterFieldName', invalidFilterFieldValue: 'invalidFilterFieldValue', invalidFilterFieldNameOrValue: 'invalidFilterFieldNameOrValue', filterCannotBePerformed: 'filterCannotBePerformed', notActiveSheet: 'notActiveSheet', invalidCustomViewName: 'invalidCustomViewName', missingRangeNForRelativeDateFilters: 'missingRangeNForRelativeDateFilters', missingMaxSize: 'missingMaxSize', missingMinSize: 'missingMinSize', missingMinMaxSize: 'missingMinMaxSize', invalidSize: 'invalidSize', invalidSizeBehaviorOnWorksheet: 'invalidSizeBehaviorOnWorksheet', sheetNotInWorkbook: 'sheetNotInWorkbook', indexOutOfRange: 'indexOutOfRange', downloadWorkbookNotAllowed: 'downloadWorkbookNotAllowed', nullOrEmptyParameter: 'nullOrEmptyParameter', browserNotCapable: 'browserNotCapable', unsupportedEventName: 'unsupportedEventName', invalidDateParameter: 'invalidDateParameter', invalidSelectionFieldName: 'invalidSelectionFieldName', invalidSelectionValue: 'invalidSelectionValue', invalidSelectionDate: 'invalidSelectionDate', noUrlForHiddenWorksheet: 'noUrlForHiddenWorksheet', maxVizResizeAttempts: 'maxVizResizeAttempts' }, true);
+        ss.initEnum($tab_ApiErrorCode, $asm, { internalError: 'internalError', serverError: 'serverError', invalidAggregationFieldName: 'invalidAggregationFieldName', invalidToolbarButtonName: 'invalidToolbarButtonName', invalidParameter: 'invalidParameter', invalidUrl: 'invalidUrl', staleDataReference: 'staleDataReference', vizAlreadyInManager: 'vizAlreadyInManager', noUrlOrParentElementNotFound: 'noUrlOrParentElementNotFound', invalidFilterFieldName: 'invalidFilterFieldName', invalidFilterFieldValue: 'invalidFilterFieldValue', invalidFilterFieldNameOrValue: 'invalidFilterFieldNameOrValue', filterCannotBePerformed: 'filterCannotBePerformed', notActiveSheet: 'notActiveSheet', invalidCustomViewName: 'invalidCustomViewName', missingRangeNForRelativeDateFilters: 'missingRangeNForRelativeDateFilters', missingMaxSize: 'missingMaxSize', missingMinSize: 'missingMinSize', missingMinMaxSize: 'missingMinMaxSize', invalidSize: 'invalidSize', invalidSizeBehaviorOnWorksheet: 'invalidSizeBehaviorOnWorksheet', sheetNotInWorkbook: 'sheetNotInWorkbook', indexOutOfRange: 'indexOutOfRange', downloadWorkbookNotAllowed: 'downloadWorkbookNotAllowed', nullOrEmptyParameter: 'nullOrEmptyParameter', browserNotCapable: 'browserNotCapable', unsupportedEventName: 'unsupportedEventName', invalidDateParameter: 'invalidDateParameter', invalidSelectionFieldName: 'invalidSelectionFieldName', invalidSelectionValue: 'invalidSelectionValue', invalidSelectionDate: 'invalidSelectionDate', noUrlForHiddenWorksheet: 'noUrlForHiddenWorksheet', maxVizResizeAttempts: 'maxVizResizeAttempts' }, true);
         ss.initEnum($tab_ApiFieldAggregationType, $asm, { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER' }, true);
         ss.initEnum($tab_ApiFieldRoleType, $asm, { dimension: 'dimension', measure: 'measure', unknown: 'unknown' }, true);
         ss.initEnum($tab_ApiFilterType, $asm, { categorical: 'categorical', quantitative: 'quantitative', hierarchical: 'hierarchical', relativedate: 'relativedate' }, true);
@@ -7016,7 +7117,8 @@
         ss.initEnum($tab_ApiSelectionUpdateType, $asm, { replace: 'replace', add: 'add', remove: 'remove' }, true);
         ss.initEnum($tab_ApiSheetSizeBehavior, $asm, { automatic: 'automatic', exactly: 'exactly', range: 'range', atleast: 'atleast', atmost: 'atmost' }, true);
         ss.initEnum($tab_ApiSheetType, $asm, { worksheet: 'worksheet', dashboard: 'dashboard', story: 'story' }, true);
-        ss.initEnum($tab_ApiTableauEventName, $asm, { customviewload: 'customviewload', customviewremove: 'customviewremove', customviewsave: 'customviewsave', customviewsetdefault: 'customviewsetdefault', filterchange: 'filterchange', firstinteractive: 'firstinteractive', firstvizsizeknown: 'firstvizsizeknown', marksselection: 'marksselection', markshighlight: 'markshighlight', parametervaluechange: 'parametervaluechange', storypointswitch: 'storypointswitch', tabswitch: 'tabswitch', vizresize: 'vizresize' }, true);
+        ss.initEnum($tab_ApiTableauEventName, $asm, { customviewload: 'customviewload', customviewremove: 'customviewremove', customviewsave: 'customviewsave', customviewsetdefault: 'customviewsetdefault', filterchange: 'filterchange', firstinteractive: 'firstinteractive', firstvizsizeknown: 'firstvizsizeknown', marksselection: 'marksselection', markshighlight: 'markshighlight', parametervaluechange: 'parametervaluechange', storypointswitch: 'storypointswitch', tabswitch: 'tabswitch', toolbarstatechange: 'toolbarstatechange', vizresize: 'vizresize' }, true);
+        ss.initEnum($tab_ApiToolbarButtonName, $asm, { redo: 'redo', undo: 'undo' }, true);
         ss.initEnum($tab_ApiToolbarPosition, $asm, { top: 'top', bottom: 'bottom' }, true);
         ss.initClass($tab_CrossDomainMessagingOptions, $asm, {
             get_router: function CrossDomainMessagingOptions$get_Router() {
@@ -7115,6 +7217,11 @@
                 return this.$newName;
             }
         }, $tab_TableauEvent);
+        ss.initClass($tab_ToolbarStateEvent, $asm, {
+            getToolbarState: function ToolbarStateEvent$GetToolbarState() {
+                return this.$toolbarStateImpl.get_toolbarState();
+            }
+        }, $tab_TableauEvent);
         ss.initClass($tab_VizImpl, $asm, {
             add_customViewsListLoad: function VizImpl$add_CustomViewsListLoad(value) {
                 this.$1$CustomViewsListLoadField = ss.delegateCombine(this.$1$CustomViewsListLoadField, value);
@@ -7181,6 +7288,12 @@
             },
             remove_$tabSwitch: function VizImpl$remove_TabSwitch(value) {
                 this.$1$TabSwitchField = ss.delegateRemove(this.$1$TabSwitchField, value);
+            },
+            add_$toolbarStateChange: function VizImpl$add_ToolbarStateChange(value) {
+                this.$1$ToolbarStateChangeField = ss.delegateCombine(this.$1$ToolbarStateChangeField, value);
+            },
+            remove_$toolbarStateChange: function VizImpl$remove_ToolbarStateChange(value) {
+                this.$1$ToolbarStateChangeField = ss.delegateRemove(this.$1$ToolbarStateChangeField, value);
             },
             add_$storyPointSwitch: function VizImpl$add_StoryPointSwitch(value) {
                 this.$1$StoryPointSwitchField = ss.delegateCombine(this.$1$StoryPointSwitchField, value);
@@ -7413,6 +7526,11 @@
                             this.$handleTabSwitchEvent(notification);
                             break;
                         }
+                    case 'api.ToolbarStateChangedEvent':
+                        {
+                            this.$handleToolbarStateChangeEvent(notification);
+                            break;
+                        }
                     case 'api.StorytellingStateChangedEvent':
                         {
                             this.$handleStorytellingStateChangedEvent(notification);
@@ -7476,6 +7594,11 @@
                             this.add_$storyPointSwitch(ss.cast(handler, Function));
                             break;
                         }
+                    case 'toolbarstatechange':
+                        {
+                            this.add_$toolbarStateChange(ss.cast(handler, Function));
+                            break;
+                        }
                     case 'vizresize':
                         {
                             this.add_$vizResize(ss.cast(handler, Function));
@@ -7534,6 +7657,11 @@
                             this.remove_$tabSwitch(ss.cast(handler, Function));
                             break;
                         }
+                    case 'toolbarstatechange':
+                        {
+                            this.remove_$toolbarStateChange(ss.cast(handler, Function));
+                            break;
+                        }
                     case 'storypointswitch':
                         {
                             this.remove_$storyPointSwitch(ss.cast(handler, Function));
@@ -7580,24 +7708,10 @@
                 this.$invokeCommand('showExportPDFDialog');
             },
             $revertAllAsync: function VizImpl$RevertAllAsync() {
-                var deferred = new tab._Deferred();
-                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.RevertAllCommand', 1, function(result) {
-                    deferred.resolve();
-                }, function(remoteError, message) {
-                    deferred.reject($tab__TableauException.createServerError(message));
-                });
-                this._sendCommand(Object).call(this, null, returnHandler);
-                return deferred.get_promise();
+                return $tab__Utility.noResultPromiseHelper('api.RevertAllCommand', null, this.$messagingOptions);
             },
             $refreshDataAsync: function VizImpl$RefreshDataAsync() {
-                var deferred = new tab._Deferred();
-                var returnHandler = new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.RefreshDataCommand', 1, function(result) {
-                    deferred.resolve();
-                }, function(remoteError, message) {
-                    deferred.reject($tab__TableauException.createServerError(message));
-                });
-                this._sendCommand(Object).call(this, null, returnHandler);
-                return deferred.get_promise();
+                return $tab__Utility.noResultPromiseHelper('api.RefreshDataCommand', null, this.$messagingOptions);
             },
             $showShareDialog: function VizImpl$ShowShareDialog() {
                 this.$invokeCommand('showShareDialog');
@@ -7691,6 +7805,12 @@
                     return;
                 }
                 this.$iframe.contentWindow.postMessage('tableau.enableVisibleRectCommunication'.toString(), '*');
+            },
+            $redoAsync: function VizImpl$RedoAsync() {
+                return $tab__Utility.noResultPromiseHelper('api.Redo', null, this.$messagingOptions);
+            },
+            $undoAsync: function VizImpl$UndoAsync() {
+                return $tab__Utility.noResultPromiseHelper('api.Undo', null, this.$messagingOptions);
             },
             _sendCommand: function(T) {
                 return function VizImpl$SendCommand(commandParameters, returnHandler) {
@@ -7960,6 +8080,13 @@
                     }
                     this.$onWorkbookInteractive(null);
                 }));
+            },
+            $handleToolbarStateChangeEvent: function VizImpl$HandleToolbarStateChangeEvent(notification) {
+                var toolbarStatePresModel = JSON.parse(ss.cast(notification.get_data(), String));
+                var toolbarStateImpl = new $tab__ToolbarStateImpl(this, toolbarStatePresModel);
+                if (!ss.staticEquals(this.$1$ToolbarStateChangeField, null)) {
+                    this.$1$ToolbarStateChangeField(new $tab_ToolbarStateEvent('toolbarstatechange', this.$viz, toolbarStateImpl));
+                }
             },
             $handleStorytellingStateChangedEvent: function VizImpl$HandleStorytellingStateChangedEvent(notification) {
                 var storyImpl = ss.cast(this.$workbookImpl.get_activeSheetImpl(), $tab__StoryImpl);
@@ -8524,6 +8651,14 @@
                 return this._impl.parentStoryImpl.get_story();
             }
         });
+        ss.initClass($tableauSoftware_ToolbarState, $asm, {
+            getViz: function ToolbarState$GetViz() {
+                return this._impl.get_viz();
+            },
+            isButtonEnabled: function ToolbarState$IsButtonEnabled(toolbarButtonName) {
+                return this._impl.isButtonEnabled(toolbarButtonName);
+            }
+        });
         ss.initClass($tableauSoftware_Version, $asm, {
             getMajor: function Version$GetMajor() {
                 return this.$major;
@@ -8637,6 +8772,12 @@
                     heightString = height.toString() + 'px';
                 }
                 this._impl.$setFrameSizeAndUpdate(widthString, heightString);
+            },
+            redoAsync: function Viz$RedoAsync() {
+                return this._impl.$redoAsync();
+            },
+            undoAsync: function Viz$UndoAsync() {
+                return this._impl.$undoAsync();
             }
         });
         ss.initClass($tableauSoftware_VizManager, $asm, {});
@@ -8778,7 +8919,7 @@
             ns.DashboardObjectType = { BLANK: 'blank', WORKSHEET: 'worksheet', QUICK_FILTER: 'quickFilter', PARAMETER_CONTROL: 'parameterControl', PAGE_FILTER: 'pageFilter', LEGEND: 'legend', TITLE: 'title', TEXT: 'text', IMAGE: 'image', WEB_PAGE: 'webPage' };
             ns.DataType = { FLOAT: 'float', INTEGER: 'integer', STRING: 'string', BOOLEAN: 'boolean', DATE: 'date', DATETIME: 'datetime' };
             ns.DateRangeType = { LAST: 'last', LASTN: 'lastn', NEXT: 'next', NEXTN: 'nextn', CURR: 'curr', TODATE: 'todate' };
-            ns.ErrorCode = { INTERNAL_ERROR: 'internalError', SERVER_ERROR: 'serverError', INVALID_AGGREGATION_FIELD_NAME: 'invalidAggregationFieldName', INVALID_PARAMETER: 'invalidParameter', INVALID_URL: 'invalidUrl', STALE_DATA_REFERENCE: 'staleDataReference', VIZ_ALREADY_IN_MANAGER: 'vizAlreadyInManager', NO_URL_OR_PARENT_ELEMENT_NOT_FOUND: 'noUrlOrParentElementNotFound', INVALID_FILTER_FIELDNAME: 'invalidFilterFieldName', INVALID_FILTER_FIELDVALUE: 'invalidFilterFieldValue', INVALID_FILTER_FIELDNAME_OR_VALUE: 'invalidFilterFieldNameOrValue', FILTER_CANNOT_BE_PERFORMED: 'filterCannotBePerformed', NOT_ACTIVE_SHEET: 'notActiveSheet', INVALID_CUSTOM_VIEW_NAME: 'invalidCustomViewName', MISSING_RANGEN_FOR_RELATIVE_DATE_FILTERS: 'missingRangeNForRelativeDateFilters', MISSING_MAX_SIZE: 'missingMaxSize', MISSING_MIN_SIZE: 'missingMinSize', MISSING_MINMAX_SIZE: 'missingMinMaxSize', INVALID_SIZE: 'invalidSize', INVALID_SIZE_BEHAVIOR_ON_WORKSHEET: 'invalidSizeBehaviorOnWorksheet', SHEET_NOT_IN_WORKBOOK: 'sheetNotInWorkbook', INDEX_OUT_OF_RANGE: 'indexOutOfRange', DOWNLOAD_WORKBOOK_NOT_ALLOWED: 'downloadWorkbookNotAllowed', NULL_OR_EMPTY_PARAMETER: 'nullOrEmptyParameter', BROWSER_NOT_CAPABLE: 'browserNotCapable', UNSUPPORTED_EVENT_NAME: 'unsupportedEventName', INVALID_DATE_PARAMETER: 'invalidDateParameter', INVALID_SELECTION_FIELDNAME: 'invalidSelectionFieldName', INVALID_SELECTION_VALUE: 'invalidSelectionValue', INVALID_SELECTION_DATE: 'invalidSelectionDate', NO_URL_FOR_HIDDEN_WORKSHEET: 'noUrlForHiddenWorksheet', MAX_VIZ_RESIZE_ATTEMPTS: 'maxVizResizeAttempts' };
+            ns.ErrorCode = { INTERNAL_ERROR: 'internalError', SERVER_ERROR: 'serverError', INVALID_AGGREGATION_FIELD_NAME: 'invalidAggregationFieldName', INVALID_TOOLBAR_BUTTON_NAME: 'invalidToolbarButtonName', INVALID_PARAMETER: 'invalidParameter', INVALID_URL: 'invalidUrl', STALE_DATA_REFERENCE: 'staleDataReference', VIZ_ALREADY_IN_MANAGER: 'vizAlreadyInManager', NO_URL_OR_PARENT_ELEMENT_NOT_FOUND: 'noUrlOrParentElementNotFound', INVALID_FILTER_FIELDNAME: 'invalidFilterFieldName', INVALID_FILTER_FIELDVALUE: 'invalidFilterFieldValue', INVALID_FILTER_FIELDNAME_OR_VALUE: 'invalidFilterFieldNameOrValue', FILTER_CANNOT_BE_PERFORMED: 'filterCannotBePerformed', NOT_ACTIVE_SHEET: 'notActiveSheet', INVALID_CUSTOM_VIEW_NAME: 'invalidCustomViewName', MISSING_RANGEN_FOR_RELATIVE_DATE_FILTERS: 'missingRangeNForRelativeDateFilters', MISSING_MAX_SIZE: 'missingMaxSize', MISSING_MIN_SIZE: 'missingMinSize', MISSING_MINMAX_SIZE: 'missingMinMaxSize', INVALID_SIZE: 'invalidSize', INVALID_SIZE_BEHAVIOR_ON_WORKSHEET: 'invalidSizeBehaviorOnWorksheet', SHEET_NOT_IN_WORKBOOK: 'sheetNotInWorkbook', INDEX_OUT_OF_RANGE: 'indexOutOfRange', DOWNLOAD_WORKBOOK_NOT_ALLOWED: 'downloadWorkbookNotAllowed', NULL_OR_EMPTY_PARAMETER: 'nullOrEmptyParameter', BROWSER_NOT_CAPABLE: 'browserNotCapable', UNSUPPORTED_EVENT_NAME: 'unsupportedEventName', INVALID_DATE_PARAMETER: 'invalidDateParameter', INVALID_SELECTION_FIELDNAME: 'invalidSelectionFieldName', INVALID_SELECTION_VALUE: 'invalidSelectionValue', INVALID_SELECTION_DATE: 'invalidSelectionDate', NO_URL_FOR_HIDDEN_WORKSHEET: 'noUrlForHiddenWorksheet', MAX_VIZ_RESIZE_ATTEMPTS: 'maxVizResizeAttempts' };
             ns.FieldAggregationType = { SUM: 'SUM', AVG: 'AVG', MIN: 'MIN', MAX: 'MAX', STDEV: 'STDEV', STDEVP: 'STDEVP', VAR: 'VAR', VARP: 'VARP', COUNT: 'COUNT', COUNTD: 'COUNTD', MEDIAN: 'MEDIAN', ATTR: 'ATTR', NONE: 'NONE', PERCENTILE: 'PERCENTILE', YEAR: 'YEAR', QTR: 'QTR', MONTH: 'MONTH', DAY: 'DAY', HOUR: 'HOUR', MINUTE: 'MINUTE', SECOND: 'SECOND', WEEK: 'WEEK', WEEKDAY: 'WEEKDAY', MONTHYEAR: 'MONTHYEAR', MDY: 'MDY', END: 'END', TRUNC_YEAR: 'TRUNC_YEAR', TRUNC_QTR: 'TRUNC_QTR', TRUNC_MONTH: 'TRUNC_MONTH', TRUNC_WEEK: 'TRUNC_WEEK', TRUNC_DAY: 'TRUNC_DAY', TRUNC_HOUR: 'TRUNC_HOUR', TRUNC_MINUTE: 'TRUNC_MINUTE', TRUNC_SECOND: 'TRUNC_SECOND', QUART1: 'QUART1', QUART3: 'QUART3', SKEWNESS: 'SKEWNESS', KURTOSIS: 'KURTOSIS', INOUT: 'INOUT', SUM_XSQR: 'SUM_XSQR', USER: 'USER' };
             ns.FieldRoleType = { DIMENSION: 'dimension', MEASURE: 'measure', UNKNOWN: 'unknown' };
             ns.FilterUpdateType = { ALL: 'all', REPLACE: 'replace', ADD: 'add', REMOVE: 'remove' };
@@ -8790,8 +8931,9 @@
             ns.SelectionUpdateType = { REPLACE: 'replace', ADD: 'add', REMOVE: 'remove' };
             ns.SheetSizeBehavior = { AUTOMATIC: 'automatic', EXACTLY: 'exactly', RANGE: 'range', ATLEAST: 'atleast', ATMOST: 'atmost' };
             ns.SheetType = { WORKSHEET: 'worksheet', DASHBOARD: 'dashboard', STORY: 'story' };
-            ns.TableauEventName = { CUSTOM_VIEW_LOAD: 'customviewload', CUSTOM_VIEW_REMOVE: 'customviewremove', CUSTOM_VIEW_SAVE: 'customviewsave', CUSTOM_VIEW_SET_DEFAULT: 'customviewsetdefault', FILTER_CHANGE: 'filterchange', FIRST_INTERACTIVE: 'firstinteractive', FIRST_VIZ_SIZE_KNOWN: 'firstvizsizeknown', MARKS_SELECTION: 'marksselection', MARKS_HIGHLIGHT: 'markshighlight', PARAMETER_VALUE_CHANGE: 'parametervaluechange', STORY_POINT_SWITCH: 'storypointswitch', TAB_SWITCH: 'tabswitch', VIZ_RESIZE: 'vizresize' };
+            ns.TableauEventName = { CUSTOM_VIEW_LOAD: 'customviewload', CUSTOM_VIEW_REMOVE: 'customviewremove', CUSTOM_VIEW_SAVE: 'customviewsave', CUSTOM_VIEW_SET_DEFAULT: 'customviewsetdefault', FILTER_CHANGE: 'filterchange', FIRST_INTERACTIVE: 'firstinteractive', FIRST_VIZ_SIZE_KNOWN: 'firstvizsizeknown', MARKS_SELECTION: 'marksselection', MARKS_HIGHLIGHT: 'markshighlight', PARAMETER_VALUE_CHANGE: 'parametervaluechange', STORY_POINT_SWITCH: 'storypointswitch', TAB_SWITCH: 'tabswitch', TOOLBAR_STATE_CHANGE: 'toolbarstatechange', VIZ_RESIZE: 'vizresize' };
             ns.ToolbarPosition = { TOP: 'top', BOTTOM: 'bottom' };
+            ns.ToolbarButtonName = { REDO: 'redo', UNDO: 'undo' };
         })();
         (function() {
             $tab__ApiObjectRegistry.$creationRegistry = null;
@@ -8804,7 +8946,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 1, 2, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 2, 0, 'null');
         })();
     })();
 

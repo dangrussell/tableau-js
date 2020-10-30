@@ -1,4 +1,4 @@
-/*! tableau-2.4.0 */
+/*! tableau-2.5.0 */
 (function() {
 
 
@@ -2579,87 +2579,6 @@
         global.tableauSoftware = global.tableauSoftware || {};
         ss.initAssembly($asm, 'vqlapishared');
         ////////////////////////////////////////////////////////////////////////////////
-        // Tableau.JavaScript.Vql.ApiShared.DeferredUtil
-        var $tab_$DeferredUtil = ss.mkType($asm, 'tab.$DeferredUtil', null, null, {
-            $coerceToTrustedPromise: function DeferredUtil$CoerceToTrustedPromise(promiseOrValue) {
-                var promise;
-                if (promiseOrValue instanceof tableauSoftware.Promise) {
-                    promise = ss.cast(promiseOrValue, $tab__PromiseImpl);
-                } else {
-                    if (ss.isValue(promiseOrValue) && typeof(promiseOrValue['valueOf']) === 'function') {
-                        promiseOrValue = promiseOrValue['valueOf']();
-                    }
-                    if ($tab_$DeferredUtil.$isPromise(promiseOrValue)) {
-                        var deferred = new $tab__DeferredImpl();
-                        ss.cast(promiseOrValue, $tab__PromiseImpl).then(ss.mkdel(deferred, deferred.resolve), ss.mkdel(deferred, deferred.reject));
-                        promise = deferred.get_promise();
-                    } else {
-                        promise = $tab_$DeferredUtil.$resolved(promiseOrValue);
-                    }
-                }
-                return promise;
-            },
-            $reject: function DeferredUtil$Reject(promiseOrValue) {
-                return $tab_$DeferredUtil.$coerceToTrustedPromise(promiseOrValue).then(function(value) {
-                    return $tab_$DeferredUtil.$rejected(ss.cast(value, ss.Exception));
-                }, null);
-            },
-            $resolved: function DeferredUtil$Resolved(value) {
-                var p = new $tab__PromiseImpl(function(callback, errback) {
-                    try {
-                        return $tab_$DeferredUtil.$coerceToTrustedPromise((ss.isValue(callback) ? callback(value) : value));
-                    } catch ($t1) {
-                        var e = ss.Exception.wrap($t1);
-                        return $tab_$DeferredUtil.$rejected(e);
-                    }
-                });
-                return p;
-            },
-            $rejected: function DeferredUtil$Rejected(reason) {
-                var p = new $tab__PromiseImpl(function(callback, errback) {
-                    try {
-                        return (ss.isValue(errback) ? $tab_$DeferredUtil.$coerceToTrustedPromise(errback(reason)) : $tab_$DeferredUtil.$rejected(reason));
-                    } catch ($t1) {
-                        var e = ss.Exception.wrap($t1);
-                        return $tab_$DeferredUtil.$rejected(e);
-                    }
-                });
-                return p;
-            },
-            $isPromise: function DeferredUtil$IsPromise(promiseOrValue) {
-                return ss.isValue(promiseOrValue) && typeof(promiseOrValue['then']) === 'function';
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // Tableau.JavaScript.Vql.ApiShared.DoNothingCrossDomainHandler
-        var $tab_$DoNothingCrossDomainHandler = ss.mkType($asm, 'tab.$DoNothingCrossDomainHandler', function() {
-            this.$hostId = null;
-            this.$1$StateReadyForQueryField = null;
-        }, {
-            add_stateReadyForQuery: function DoNothingCrossDomainHandler$add_StateReadyForQuery(value) {
-                this.$1$StateReadyForQueryField = ss.delegateCombine(this.$1$StateReadyForQueryField, value);
-            },
-            remove_stateReadyForQuery: function DoNothingCrossDomainHandler$remove_StateReadyForQuery(value) {
-                this.$1$StateReadyForQueryField = ss.delegateRemove(this.$1$StateReadyForQueryField, value);
-            },
-            get_iframe: function DoNothingCrossDomainHandler$get_Iframe() {
-                return null;
-            },
-            get_hostId: function DoNothingCrossDomainHandler$get_HostId() {
-                return this.$hostId;
-            },
-            set_hostId: function DoNothingCrossDomainHandler$set_HostId(value) {
-                this.$hostId = value;
-            },
-            get_$serverRoot: function DoNothingCrossDomainHandler$get_ServerRoot() {
-                return '*';
-            },
-            handleEventNotification: function DoNothingCrossDomainHandler$HandleEventNotification(eventName, parameters) {},
-            $silenceTheCompilerWarning: function DoNothingCrossDomainHandler$SilenceTheCompilerWarning() {
-                this.$1$StateReadyForQueryField(null);
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.ApiShared.ApiCommand
         var $tab__ApiCommand = global.tab._ApiCommand = ss.mkType($asm, 'tab._ApiCommand', function(name, commandId, hostId, parameters) {
             this.$1$NameField = null;
@@ -3515,6 +3434,87 @@
                 return function Utility$Clone(src) {
                     return JSON.parse(JSON.stringify(src));
                 };
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.ApiShared.DeferredUtil
+        var $tab_$DeferredUtil = ss.mkType($asm, 'tab.$DeferredUtil', null, null, {
+            $coerceToTrustedPromise: function DeferredUtil$CoerceToTrustedPromise(promiseOrValue) {
+                var promise;
+                if (promiseOrValue instanceof tableauSoftware.Promise) {
+                    promise = ss.cast(promiseOrValue, $tab__PromiseImpl);
+                } else {
+                    if (ss.isValue(promiseOrValue) && typeof(promiseOrValue['valueOf']) === 'function') {
+                        promiseOrValue = promiseOrValue['valueOf']();
+                    }
+                    if ($tab_$DeferredUtil.$isPromise(promiseOrValue)) {
+                        var deferred = new $tab__DeferredImpl();
+                        ss.cast(promiseOrValue, $tab__PromiseImpl).then(ss.mkdel(deferred, deferred.resolve), ss.mkdel(deferred, deferred.reject));
+                        promise = deferred.get_promise();
+                    } else {
+                        promise = $tab_$DeferredUtil.$resolved(promiseOrValue);
+                    }
+                }
+                return promise;
+            },
+            $reject: function DeferredUtil$Reject(promiseOrValue) {
+                return $tab_$DeferredUtil.$coerceToTrustedPromise(promiseOrValue).then(function(value) {
+                    return $tab_$DeferredUtil.$rejected(ss.cast(value, ss.Exception));
+                }, null);
+            },
+            $resolved: function DeferredUtil$Resolved(value) {
+                var p = new $tab__PromiseImpl(function(callback, errback) {
+                    try {
+                        return $tab_$DeferredUtil.$coerceToTrustedPromise((ss.isValue(callback) ? callback(value) : value));
+                    } catch ($t1) {
+                        var e = ss.Exception.wrap($t1);
+                        return $tab_$DeferredUtil.$rejected(e);
+                    }
+                });
+                return p;
+            },
+            $rejected: function DeferredUtil$Rejected(reason) {
+                var p = new $tab__PromiseImpl(function(callback, errback) {
+                    try {
+                        return (ss.isValue(errback) ? $tab_$DeferredUtil.$coerceToTrustedPromise(errback(reason)) : $tab_$DeferredUtil.$rejected(reason));
+                    } catch ($t1) {
+                        var e = ss.Exception.wrap($t1);
+                        return $tab_$DeferredUtil.$rejected(e);
+                    }
+                });
+                return p;
+            },
+            $isPromise: function DeferredUtil$IsPromise(promiseOrValue) {
+                return ss.isValue(promiseOrValue) && typeof(promiseOrValue['then']) === 'function';
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.ApiShared.DoNothingCrossDomainHandler
+        var $tab_$DoNothingCrossDomainHandler = ss.mkType($asm, 'tab.$DoNothingCrossDomainHandler', function() {
+            this.$hostId = null;
+            this.$1$StateReadyForQueryField = null;
+        }, {
+            add_stateReadyForQuery: function DoNothingCrossDomainHandler$add_StateReadyForQuery(value) {
+                this.$1$StateReadyForQueryField = ss.delegateCombine(this.$1$StateReadyForQueryField, value);
+            },
+            remove_stateReadyForQuery: function DoNothingCrossDomainHandler$remove_StateReadyForQuery(value) {
+                this.$1$StateReadyForQueryField = ss.delegateRemove(this.$1$StateReadyForQueryField, value);
+            },
+            get_iframe: function DoNothingCrossDomainHandler$get_Iframe() {
+                return null;
+            },
+            get_hostId: function DoNothingCrossDomainHandler$get_HostId() {
+                return this.$hostId;
+            },
+            set_hostId: function DoNothingCrossDomainHandler$set_HostId(value) {
+                this.$hostId = value;
+            },
+            get_$serverRoot: function DoNothingCrossDomainHandler$get_ServerRoot() {
+                return '*';
+            },
+            handleEventNotification: function DoNothingCrossDomainHandler$HandleEventNotification(eventName, parameters) {},
+            $silenceTheCompilerWarning: function DoNothingCrossDomainHandler$SilenceTheCompilerWarning() {
+                this.$1$StateReadyForQueryField(null);
             }
         });
         ////////////////////////////////////////////////////////////////////////////////
@@ -4502,6 +4502,19 @@
                 commandParameters['api.maxRows'] = ss.coalesce(options.maxRows, 0);
                 return commandParameters;
             },
+            getUnderlyingTablesCommandParams: function GetDataCommandsBuilder$GetUnderlyingTablesCommandParams() {
+                return {};
+            },
+            getUnderlyingTableDataCommandParams: function GetDataCommandsBuilder$GetUnderlyingTableDataCommandParams(tableId, options) {
+                var commandParameters = {};
+                options = options || new Object();
+                commandParameters['api.ignoreAliases'] = ss.coalesce(options.ignoreAliases, false);
+                commandParameters['api.ignoreSelection'] = ss.coalesce(options.ignoreSelection, false);
+                commandParameters['api.includeAllColumns'] = ss.coalesce(options.includeAllColumns, false);
+                commandParameters['api.maxRows'] = ss.coalesce(options.maxRows, 0);
+                commandParameters['api.tableId'] = ss.coalesce(tableId, '');
+                return commandParameters;
+            },
             getSummaryDataResponseHandler: function GetDataCommandsBuilder$GetSummaryDataResponseHandler(deferred) {
                 return new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.GetSummaryTableCommand', 0, ss.mkdel(this, function(result) {
                     var dataResult = result;
@@ -4547,6 +4560,43 @@
                     clientColumns.push(new $tableauSoftware_Column(clientColumn));
                 }
                 return clientColumns;
+            },
+            $appendErrorMessageIfNeededThenLog: function GetDataCommandsBuilder$AppendErrorMessageIfNeededThenLog(remoteError, message) {
+                var errorMessage = message;
+                if (!remoteError) {
+                    var sb = new ss.StringBuilder(message);
+                    sb.append('\nPossible reasons:');
+                    sb.append('\nCalling newer version of API against an older version of Tableau Server');
+                    errorMessage = sb.toString();
+                }
+                console.error(errorMessage);
+                return errorMessage;
+            },
+            getUnderlyingTablesResponseHandler: function GetDataCommandsBuilder$GetUnderlyingTablesResponseHandler(deferred) {
+                return new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.GetUnderlyingTablesCommand', 0, ss.mkdel(this, function(result) {
+                    var tablesResult = result;
+                    var logicalTables = this.$processGetLogicalTablesPresModel(tablesResult);
+                    deferred.resolve(logicalTables._toApiCollection());
+                }), ss.mkdel(this, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(this.$appendErrorMessageIfNeededThenLog(remoteError, message)));
+                }));
+            },
+            $processGetLogicalTablesPresModel: function GetDataCommandsBuilder$ProcessGetLogicalTablesPresModel(model) {
+                var logicalTables = new tab._Collection();
+                for (var $t1 = 0; $t1 < model.logicalTables.length; $t1++) {
+                    var pm = model.logicalTables[$t1];
+                    logicalTables._add(pm.tableId, new $tableauSoftware_LogicalTable(pm.tableId, pm.caption));
+                }
+                return logicalTables;
+            },
+            getUnderlyingTableDataResponseHandler: function GetDataCommandsBuilder$GetUnderlyingTableDataResponseHandler(deferred) {
+                return new(ss.makeGenericType($tab_CommandReturnHandler$1, [Object]))('api.GetUnderlyingTableDataCommand', 0, ss.mkdel(this, function(result) {
+                    var dataResult = result;
+                    var dt = this.processGetDataPresModel(dataResult);
+                    deferred.resolve(dt);
+                }), ss.mkdel(this, function(remoteError, message) {
+                    deferred.reject($tab__TableauException.createServerError(this.$appendErrorMessageIfNeededThenLog(remoteError, message)));
+                }));
             }
         });
         ////////////////////////////////////////////////////////////////////////////////
@@ -4863,6 +4913,21 @@
             }
         });
         ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.LogicalTable
+        var $tableauSoftware_LogicalTable = global.tableauSoftware.LogicalTable = ss.mkType($asm, 'tableauSoftware.LogicalTable', function(tableId, caption) {
+            this.$tableId = null;
+            this.$caption = null;
+            this.$tableId = tableId;
+            this.$caption = caption;
+        }, {
+            getTableId: function LogicalTable$GetTableId() {
+                return this.$tableId;
+            },
+            getCaption: function LogicalTable$GetCaption() {
+                return this.$caption;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
         // tableauSoftware.Mark
         var $tableauSoftware_Mark = global.tableauSoftware.Mark = ss.mkType($asm, 'tableauSoftware.Mark', function(tupleId) {
             this.impl = null;
@@ -4882,8 +4947,6 @@
             this.value = value;
             this.formattedValue = (ss.isValue(value) ? value.toString() : '');
         });
-        ss.initClass($tab_$DeferredUtil);
-        ss.initClass($tab_$DoNothingCrossDomainHandler);
         ss.initClass($tab__ApiCommand);
         ss.initClass($tab__ApiObjectRegistry);
         ss.initClass($tab__ApiServerNotification);
@@ -4898,6 +4961,8 @@
         ss.initClass($tab__Rect);
         ss.initClass($tab__TableauException);
         ss.initClass($tab__Utility);
+        ss.initClass($tab_$DeferredUtil);
+        ss.initClass($tab_$DoNothingCrossDomainHandler);
         ss.initClass($tab_ApiEnumConverter);
         ss.initClass($tab_ApiMessageHandler);
         ss.initClass($tab_ApiMessagingOptions);
@@ -4917,6 +4982,7 @@
         ss.initClass($tab_Size, Object);
         ss.initClass($tableauSoftware_Column);
         ss.initClass($tableauSoftware_DataTable);
+        ss.initClass($tableauSoftware_LogicalTable);
         ss.initClass($tableauSoftware_Mark);
         ss.initClass($tableauSoftware_Pair);
         (function() {
@@ -4987,129 +5053,6 @@
         global.tab = global.tab || {};
         global.tableauSoftware = global.tableauSoftware || {};
         ss.initAssembly($asm, 'Tableau.JavaScript.Vql.Api');
-        ////////////////////////////////////////////////////////////////////////////////
-        // tableauSoftware.CustomViewEventContext
-        var $tab_$CustomViewEventContext = ss.mkType($asm, 'tab.$CustomViewEventContext', function(workbook, customViewImpl) {
-            this.$customViewImpl = null;
-            $tab_EventContext.call(this, workbook, null);
-            this.$customViewImpl = customViewImpl;
-        }, {
-            get__customViewImpl: function CustomViewEventContext$get_CustomViewImpl() {
-                return this.$customViewImpl;
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // Tableau.JavaScript.Vql.Api.DashboardZoneInfo
-        var $tab_$DashboardZoneInfo = ss.mkType($asm, 'tab.$DashboardZoneInfo', null, null, {
-            isInstanceOfType: function() {
-                return true;
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // tableauSoftware.FilterEventContext
-        var $tab_$FilterEventContext = ss.mkType($asm, 'tab.$FilterEventContext', function(workbookImpl, worksheetImpl, fieldFieldName, filterCaption) {
-            this.$fieldFieldName = null;
-            this.$filterCaption = null;
-            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
-            this.$fieldFieldName = fieldFieldName;
-            this.$filterCaption = filterCaption;
-        }, {
-            get__filterFieldName: function FilterEventContext$get_FilterFieldName() {
-                return this.$fieldFieldName;
-            },
-            get_$filterCaption: function FilterEventContext$get_FilterCaption() {
-                return this.$filterCaption;
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // tableauSoftware.HighlightEventContext
-        var $tab_$HighlightEventContext = ss.mkType($asm, 'tab.$HighlightEventContext', function(workbookImpl, worksheetImpl) {
-            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // tableauSoftware.MarksEventContext
-        var $tab_$MarksEventContext = ss.mkType($asm, 'tab.$MarksEventContext', function(workbookImpl, worksheetImpl) {
-            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // tableauSoftware.ParameterEventContext
-        var $tab_$ParameterEventContext = ss.mkType($asm, 'tab.$ParameterEventContext', function(workbookImpl, parameterName) {
-            this.$parameterName = null;
-            $tab_EventContext.call(this, workbookImpl, null);
-            this.$parameterName = parameterName;
-        }, {
-            get__parameterName: function ParameterEventContext$get_ParameterName() {
-                return this.$parameterName;
-            }
-        });
-        ////////////////////////////////////////////////////////////////////////////////
-        // Tableau.JavaScript.Vql.Api.ParameterImpl
-        var $tab_$ParameterImpl = ss.mkType($asm, 'tab.$ParameterImpl', function(pm) {
-            this.$parameter = null;
-            this.$name = null;
-            this.$currentValue = null;
-            this.$dataType = null;
-            this.$allowableValuesType = null;
-            this.$allowableValues = null;
-            this.$minValue = null;
-            this.$maxValue = null;
-            this.$stepSize = null;
-            this.$dateStepPeriod = null;
-            this.$name = pm.name;
-            this.$currentValue = tab._Utility.getDataValue(pm.currentValue);
-            this.$dataType = tab.ApiEnumConverter.convertParameterDataType(pm.dataType);
-            this.$allowableValuesType = tab.ApiEnumConverter.convertParameterAllowableValuesType(pm.allowableValuesType);
-            // TODO we actually have allowables values in the "range" case, do we want them
-            if (ss.isValue(pm.allowableValues) && this.$allowableValuesType === 'list') {
-                this.$allowableValues = [];
-                for (var $t1 = 0; $t1 < pm.allowableValues.length; $t1++) {
-                    var adv = pm.allowableValues[$t1];
-                    this.$allowableValues.push(tab._Utility.getDataValue(adv));
-                }
-            }
-            if (this.$allowableValuesType === 'range') {
-                this.$minValue = tab._Utility.getDataValue(pm.minValue);
-                this.$maxValue = tab._Utility.getDataValue(pm.maxValue);
-                this.$stepSize = pm.stepSize;
-                if ((this.$dataType === 'date' || this.$dataType === 'datetime') && ss.isValue(this.$stepSize) && ss.isValue(pm.dateStepPeriod)) {
-                    this.$dateStepPeriod = tab.ApiEnumConverter.convertPeriodType(pm.dateStepPeriod);
-                }
-            }
-        }, {
-            get_$parameter: function ParameterImpl$get_Parameter() {
-                if (ss.isNullOrUndefined(this.$parameter)) {
-                    this.$parameter = new $tableauSoftware_Parameter(this);
-                }
-                return this.$parameter;
-            },
-            get_$name: function ParameterImpl$get_Name() {
-                return this.$name;
-            },
-            get_$currentValue: function ParameterImpl$get_CurrentValue() {
-                return this.$currentValue;
-            },
-            get_$dataType: function ParameterImpl$get_DataType() {
-                return this.$dataType;
-            },
-            get_$allowableValuesType: function ParameterImpl$get_AllowableValuesType() {
-                return this.$allowableValuesType;
-            },
-            get_$allowableValues: function ParameterImpl$get_AllowableValues() {
-                return this.$allowableValues;
-            },
-            get_$minValue: function ParameterImpl$get_MinValue() {
-                return this.$minValue;
-            },
-            get_$maxValue: function ParameterImpl$get_MaxValue() {
-                return this.$maxValue;
-            },
-            get_$stepSize: function ParameterImpl$get_StepSize() {
-                return this.$stepSize;
-            },
-            get_$dateStepPeriod: function ParameterImpl$get_DateStepPeriod() {
-                return this.$dateStepPeriod;
-            }
-        });
         ////////////////////////////////////////////////////////////////////////////////
         // Tableau.JavaScript.Vql.Api.ApiBootstrap
         var $tab__ApiBootstrap = global.tab._ApiBootstrap = ss.mkType($asm, 'tab._ApiBootstrap', null, null, {
@@ -6202,7 +6145,10 @@
                     url.push(this.parentElement.clientWidth + ',' + this.parentElement.clientHeight);
                     url.push('&');
                 }
-                url.push(':embed=y');
+                // TFSID:1063503 - multiple :embed parameters can be a problem
+                if (!(this.userSuppliedParameters.indexOf(':embed=y') !== -1)) {
+                    url.push(':embed=y');
+                }
                 // Suppress the viz home page in Tableau Public.
                 url.push('&:showVizHome=n');
                 // We don't support mixed mode where the API script file is debug
@@ -7241,6 +7187,26 @@
                 this.sendCommand(Object).call(this, commandParameters, returnHandler);
                 return deferred.get_promise();
             },
+            $getUnderlyingTablesAsync: function WorksheetImpl$GetUnderlyingTablesAsync() {
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                // Prepare the command parameters
+                var commandParameters = this.$getDataCommandsBuilder.getUnderlyingTablesCommandParams();
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = this.$getDataCommandsBuilder.getUnderlyingTablesResponseHandler(deferred);
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
+            $getUnderlyingTableDataAsync: function WorksheetImpl$GetUnderlyingTableDataAsync(tableId, options) {
+                this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
+                var deferred = new tab._Deferred();
+                //Prepare the command parameters
+                var commandParameters = this.$getDataCommandsBuilder.getUnderlyingTableDataCommandParams(tableId, options);
+                this.$addVisualIdToCommand(commandParameters);
+                var returnHandler = this.$getDataCommandsBuilder.getUnderlyingTableDataResponseHandler(deferred);
+                this.sendCommand(Object).call(this, commandParameters, returnHandler);
+                return deferred.get_promise();
+            },
             $clearHighlightedMarksAsync: function WorksheetImpl$ClearHighlightedMarksAsync() {
                 this.$verifyActiveSheetOrEmbeddedInActiveDashboard();
                 var deferred = new tab._Deferred();
@@ -7353,6 +7319,129 @@
                     }
                 }
                 return null;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.CustomViewEventContext
+        var $tab_$CustomViewEventContext = ss.mkType($asm, 'tab.$CustomViewEventContext', function(workbook, customViewImpl) {
+            this.$customViewImpl = null;
+            $tab_EventContext.call(this, workbook, null);
+            this.$customViewImpl = customViewImpl;
+        }, {
+            get__customViewImpl: function CustomViewEventContext$get_CustomViewImpl() {
+                return this.$customViewImpl;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Api.DashboardZoneInfo
+        var $tab_$DashboardZoneInfo = ss.mkType($asm, 'tab.$DashboardZoneInfo', null, null, {
+            isInstanceOfType: function() {
+                return true;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.FilterEventContext
+        var $tab_$FilterEventContext = ss.mkType($asm, 'tab.$FilterEventContext', function(workbookImpl, worksheetImpl, fieldFieldName, filterCaption) {
+            this.$fieldFieldName = null;
+            this.$filterCaption = null;
+            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
+            this.$fieldFieldName = fieldFieldName;
+            this.$filterCaption = filterCaption;
+        }, {
+            get__filterFieldName: function FilterEventContext$get_FilterFieldName() {
+                return this.$fieldFieldName;
+            },
+            get_$filterCaption: function FilterEventContext$get_FilterCaption() {
+                return this.$filterCaption;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.HighlightEventContext
+        var $tab_$HighlightEventContext = ss.mkType($asm, 'tab.$HighlightEventContext', function(workbookImpl, worksheetImpl) {
+            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.MarksEventContext
+        var $tab_$MarksEventContext = ss.mkType($asm, 'tab.$MarksEventContext', function(workbookImpl, worksheetImpl) {
+            $tab_EventContext.call(this, workbookImpl, worksheetImpl);
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // tableauSoftware.ParameterEventContext
+        var $tab_$ParameterEventContext = ss.mkType($asm, 'tab.$ParameterEventContext', function(workbookImpl, parameterName) {
+            this.$parameterName = null;
+            $tab_EventContext.call(this, workbookImpl, null);
+            this.$parameterName = parameterName;
+        }, {
+            get__parameterName: function ParameterEventContext$get_ParameterName() {
+                return this.$parameterName;
+            }
+        });
+        ////////////////////////////////////////////////////////////////////////////////
+        // Tableau.JavaScript.Vql.Api.ParameterImpl
+        var $tab_$ParameterImpl = ss.mkType($asm, 'tab.$ParameterImpl', function(pm) {
+            this.$parameter = null;
+            this.$name = null;
+            this.$currentValue = null;
+            this.$dataType = null;
+            this.$allowableValuesType = null;
+            this.$allowableValues = null;
+            this.$minValue = null;
+            this.$maxValue = null;
+            this.$stepSize = null;
+            this.$dateStepPeriod = null;
+            this.$name = pm.name;
+            this.$currentValue = tab._Utility.getDataValue(pm.currentValue);
+            this.$dataType = tab.ApiEnumConverter.convertParameterDataType(pm.dataType);
+            this.$allowableValuesType = tab.ApiEnumConverter.convertParameterAllowableValuesType(pm.allowableValuesType);
+            // TODO we actually have allowables values in the "range" case, do we want them
+            if (ss.isValue(pm.allowableValues) && this.$allowableValuesType === 'list') {
+                this.$allowableValues = [];
+                for (var $t1 = 0; $t1 < pm.allowableValues.length; $t1++) {
+                    var adv = pm.allowableValues[$t1];
+                    this.$allowableValues.push(tab._Utility.getDataValue(adv));
+                }
+            }
+            if (this.$allowableValuesType === 'range') {
+                this.$minValue = tab._Utility.getDataValue(pm.minValue);
+                this.$maxValue = tab._Utility.getDataValue(pm.maxValue);
+                this.$stepSize = pm.stepSize;
+                if ((this.$dataType === 'date' || this.$dataType === 'datetime') && ss.isValue(this.$stepSize) && ss.isValue(pm.dateStepPeriod)) {
+                    this.$dateStepPeriod = tab.ApiEnumConverter.convertPeriodType(pm.dateStepPeriod);
+                }
+            }
+        }, {
+            get_$parameter: function ParameterImpl$get_Parameter() {
+                if (ss.isNullOrUndefined(this.$parameter)) {
+                    this.$parameter = new $tableauSoftware_Parameter(this);
+                }
+                return this.$parameter;
+            },
+            get_$name: function ParameterImpl$get_Name() {
+                return this.$name;
+            },
+            get_$currentValue: function ParameterImpl$get_CurrentValue() {
+                return this.$currentValue;
+            },
+            get_$dataType: function ParameterImpl$get_DataType() {
+                return this.$dataType;
+            },
+            get_$allowableValuesType: function ParameterImpl$get_AllowableValuesType() {
+                return this.$allowableValuesType;
+            },
+            get_$allowableValues: function ParameterImpl$get_AllowableValues() {
+                return this.$allowableValues;
+            },
+            get_$minValue: function ParameterImpl$get_MinValue() {
+                return this.$minValue;
+            },
+            get_$maxValue: function ParameterImpl$get_MaxValue() {
+                return this.$maxValue;
+            },
+            get_$stepSize: function ParameterImpl$get_StepSize() {
+                return this.$stepSize;
+            },
+            get_$dateStepPeriod: function ParameterImpl$get_DateStepPeriod() {
+                return this.$dateStepPeriod;
             }
         });
         ////////////////////////////////////////////////////////////////////////////////
@@ -8217,6 +8306,9 @@
             $showExportPDFDialog: function VizImpl$ShowExportPDFDialog() {
                 this.$invokeCommand('showExportPDFDialog');
             },
+            $showExportPowerPointDialog: function VizImpl$ShowExportPowerPointDialog() {
+                this.$invokeCommand('showExportPowerPointDialog');
+            },
             $revertAllAsync: function VizImpl$RevertAllAsync() {
                 return tab._Utility.noResultPromiseHelper('api.RevertAllCommand', null, this.$messagingOptions);
             },
@@ -8446,7 +8538,7 @@
                 return deferred.get_promise();
             },
             $invokeCommand: function VizImpl$InvokeCommand(command, sheetName) {
-                if (command !== 'showExportImageDialog' && command !== 'showExportDataDialog' && command !== 'showExportCrosstabDialog' && command !== 'showExportPDFDialog' && command !== 'showShareDialog' && command !== 'showDownloadWorkbookDialog') {
+                if (command !== 'showExportImageDialog' && command !== 'showExportDataDialog' && command !== 'showExportCrosstabDialog' && command !== 'showExportPDFDialog' && command !== 'showShareDialog' && command !== 'showExportPowerPointDialog' && command !== 'showDownloadWorkbookDialog') {
                     throw tab._TableauException.createInternalError(null);
                 }
                 // prepare the parameter
@@ -9568,6 +9660,9 @@
             showExportPDFDialog: function Viz$ShowExportPDFDialog() {
                 this._impl.$showExportPDFDialog();
             },
+            showExportPowerPointDialog: function Viz$ShowExportPowerPointDialog() {
+                this._impl.$showExportPowerPointDialog();
+            },
             revertAllAsync: function Viz$RevertAllAsync() {
                 return this._impl.$revertAllAsync();
             },
@@ -9726,7 +9821,14 @@
                 return this._impl.$getSummaryDataAsync(options);
             },
             getUnderlyingDataAsync: function Worksheet$GetUnderlyingDataAsync(options) {
+                console.warn('Method getUnderlyingDataAsync is deprecated. Please use getUnderlyingTableDataAsync instead.');
                 return this._impl.$getUnderlyingDataAsync(options);
+            },
+            getUnderlyingTablesAsync: function Worksheet$GetUnderlyingTablesAsync() {
+                return this._impl.$getUnderlyingTablesAsync();
+            },
+            getUnderlyingTableDataAsync: function Worksheet$GetUnderlyingTableDataAsync(tableId, options) {
+                return this._impl.$getUnderlyingTableDataAsync(tableId, options);
             },
             clearHighlightedMarksAsync: function Worksheet$ClearHighlightedMarksAsync() {
                 return this._impl.$clearHighlightedMarksAsync();
@@ -9741,14 +9843,6 @@
                 return this._impl.$getHighlightedMarksAsync();
             }
         });
-        ss.initClass($tab_EventContext);
-        ss.initClass($tab_$CustomViewEventContext, $tab_EventContext);
-        ss.initClass($tab_$DashboardZoneInfo);
-        ss.initClass($tab_$FilterEventContext, $tab_EventContext);
-        ss.initClass($tab_$HighlightEventContext, $tab_EventContext);
-        ss.initClass($tab_$MarksEventContext, $tab_EventContext);
-        ss.initClass($tab_$ParameterEventContext, $tab_EventContext);
-        ss.initClass($tab_$ParameterImpl);
         ss.initClass($tab__ApiBootstrap);
         ss.initClass($tab__CustomViewImpl);
         ss.initClass($tab__SheetImpl);
@@ -9763,6 +9857,14 @@
         ss.initClass($tab__VizParameters);
         ss.initClass($tab__WorkbookImpl);
         ss.initClass($tab__WorksheetImpl, $tab__SheetImpl);
+        ss.initClass($tab_EventContext);
+        ss.initClass($tab_$CustomViewEventContext, $tab_EventContext);
+        ss.initClass($tab_$DashboardZoneInfo);
+        ss.initClass($tab_$FilterEventContext, $tab_EventContext);
+        ss.initClass($tab_$HighlightEventContext, $tab_EventContext);
+        ss.initClass($tab_$MarksEventContext, $tab_EventContext);
+        ss.initClass($tab_$ParameterEventContext, $tab_EventContext);
+        ss.initClass($tab_$ParameterImpl);
         ss.initClass($tab_TableauEvent);
         ss.initClass($tab_CustomViewEvent, $tab_TableauEvent);
         ss.initClass($tab_WorksheetEvent, $tab_TableauEvent);
@@ -9814,7 +9916,7 @@
             $tab__WorksheetImpl.$regexHierarchicalFieldName = new RegExp('\\[[^\\]]+\\]\\.', 'g');
         })();
         (function() {
-            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 4, 0, 'null');
+            $tableauSoftware_Version.$currentVersion = new $tableauSoftware_Version(2, 5, 0, 'null');
         })();
     })();
 

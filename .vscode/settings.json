@@ -1,0 +1,5 @@
+{
+    "files.insertFinalNewline": false,
+    "files.trimFinalNewlines": true,
+    "prettier.enable": false
+}
